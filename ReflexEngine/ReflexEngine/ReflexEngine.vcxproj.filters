@@ -22,6 +22,9 @@
     <Filter Include="IMGUI">
       <UniqueIdentifier>{b2d9b34f-3d35-4775-80a3-70c815684cda}</UniqueIdentifier>
     </Filter>
+    <Filter Include="JSON">
+      <UniqueIdentifier>{ae3433ec-f28d-43ae-bf60-6ddbeffb0f74}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TransformComponent.h">
@@ -117,6 +120,12 @@
     <ClInclude Include="IMGUI\imconfig.h">
       <Filter>IMGUI</Filter>
     </ClInclude>
+    <ClInclude Include="JSON\json\json-forwards.h">
+      <Filter>JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="JSON\json\json.h">
+      <Filter>JSON</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TransformComponent.cpp">
@@ -181,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="IMGUI\imgui.cpp">
       <Filter>IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="JSON\jsoncpp.cpp">
+      <Filter>JSON</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

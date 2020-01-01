@@ -1,6 +1,7 @@
 #pragma once
 
 #include <typeindex>
+#include <array>
 
 // Common Utility
 namespace Reflex
@@ -57,6 +58,12 @@ namespace Reflex
 		return ( ( a %= b ) < 0 ) ? a + b : a;
 	}
 
+	inline float Modf( float a, float b )
+	{
+		a = std::fmod( a, b );
+		return ( a < 0 ) ? a + b : a;
+	}
+
 	inline int RandomInt( const int max )
 	{
 		return rand() % ( max + 1 );
@@ -89,18 +96,18 @@ namespace Reflex
 
 	inline float Round( float value )
 	{
-		return std::floor( value + 0.5f );
+		return std::round( value );
 	}
 
 	inline float Round( float value, int accuracy )
 	{
 		value *= accuracy;
-		return( std::floor( value + 0.5f ) / ( float )accuracy );
+		return std::round( value ) / ( float )accuracy;
 	}
 
 	inline int RoundToInt( float value )
 	{
-		return ( int )std::floor( value + 0.5f );
+		return ( int )std::round( value );
 	}
 
 	template< typename T >
@@ -199,6 +206,26 @@ namespace Reflex
 	inline sf::Vector2i Vector2uToVector2i( const sf::Vector2u& convert )
 	{
 		return sf::Vector2i( ( int )convert.x, ( int )convert.y );
+	}
+
+	inline sf::Color ToSFColour( const std::array< float, 3 >& colour )
+	{
+		return sf::Color( sf::Uint8( colour[0] * 255 ), sf::Uint8( colour[1] * 255 ), sf::Uint8( colour[2] * 255 ) );
+	}
+
+	inline sf::Color ToSFColour( const std::array< float, 4 >& colour )
+	{
+		return sf::Color( sf::Uint8( colour[0] * 255 ), sf::Uint8( colour[1] * 255 ), sf::Uint8( colour[2] * 255 ), sf::Uint8( colour[3] * 255 ) );
+	}
+
+	inline std::array< float, 3 > ToImGuiColour3( const sf::Color& colour )
+	{
+		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f };
+	}
+
+	inline std::array< float, 4 > ToImGuiColour4( const sf::Color & colour )
+	{
+		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f, colour.a / 255.0f };
 	}
 
 	// Useful math functions

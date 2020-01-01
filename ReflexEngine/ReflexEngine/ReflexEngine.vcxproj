@@ -34,6 +34,8 @@
     <ClInclude Include="IMGUI\imstb_truetype.h" />
     <ClInclude Include="InteractableComponent.h" />
     <ClInclude Include="InteractableSystem.h" />
+    <ClInclude Include="JSON\json\json-forwards.h" />
+    <ClInclude Include="JSON\json\json.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="MovementSystem.h" />
     <ClInclude Include="Object.h" />
@@ -113,6 +115,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Precompiled.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="InteractableSystem.cpp" />
+    <ClCompile Include="JSON\jsoncpp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Logging.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Precompiled.h</PrecompiledHeaderFile>

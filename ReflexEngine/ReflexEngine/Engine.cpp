@@ -37,6 +37,7 @@ namespace Reflex::Core
 	
 	void Engine::Setup()
 	{
+		srand( (unsigned )time( 0 ) );
 		m_window.setPosition( sf::Vector2i( -6, 0 ) );
 		ImGui::SFML::Init( m_window );
 		Profiler::GetProfiler();
@@ -49,6 +50,8 @@ namespace Reflex::Core
 
 	void Engine::Run()
 	{
+		m_totalTime.restart();
+
 		try
 		{
 			sf::Clock clock;
@@ -76,14 +79,12 @@ namespace Reflex::Core
 				Render();
 			}
 
-#ifdef PROFILING
 			Profiler::GetProfiler().OutputResults( "Performance_Results.txt" );
-#endif
 		}
 		catch( std::exception& e )
 		{
 			LOG_CRIT( "*EXCEPTION: " << *e.what() );
-			throw e;
+			throw;
 		}
 	}
 
@@ -132,9 +133,23 @@ namespace Reflex::Core
 		m_window.setView( m_window.getDefaultView() );
 
 		ImGui::SetNextWindowPos( sf::Vector2( 5.0f, 5.0f ), ImGuiCond_::ImGuiCond_Once );
-		ImGui::SetNextWindowSize( sf::Vector2( 200.0f, 100.0f ), ImGuiCond_::ImGuiCond_Once );
+		ImGui::SetNextWindowSize( sf::Vector2( 200.0f, 200.0f ), ImGuiCond_::ImGuiCond_Once );
 		ImGui::Begin( "Engine Info" );
 		ImGui::Text( m_statisticsText.toAnsiString().c_str() );
+
+		ImGui::Checkbox( "Show ImGui Metrics", &m_showMetrics );
+		ImGui::Checkbox( "Show ImGui Style Editor", &m_showStyleEditor );
+
+		if( m_showMetrics )
+			ImGui::ShowMetricsWindow();
+
+		if( m_showStyleEditor ) 
+		{ 
+			ImGui::Begin( "Style Editor", &m_showStyleEditor );
+			ImGui::ShowStyleEditor(); 
+			ImGui::End(); 
+		}
+
 		ImGui::End();
 
 		ImGui::SFML::Render( m_window );
@@ -148,11 +163,18 @@ namespace Reflex::Core
 
 		if( m_statisticsUpdateTime >= sf::seconds( 1.0f ) )
 		{
-			const auto ms_per_frame = m_statisticsUpdateTime.asMilliseconds() / m_statisticsNumFrames;
-			m_statisticsText = "FPS: " + std::to_string( m_statisticsNumFrames ) + "\n" +
-				"Frame Time: " + ( ms_per_frame > 0 ? std::to_string( ms_per_frame ) + "ms" :
-				std::to_string( m_statisticsUpdateTime.asMicroseconds() / m_statisticsNumFrames ) + "us" );
+			const auto ms_per_frame = m_statisticsUpdateTime.asMilliseconds() / ( float )m_statisticsNumFrames;
+			std::stringstream ss;
+			ss << "FPS: " << std::to_string( m_statisticsNumFrames ) << "\nFrame Time: ";
+			
+			if( ms_per_frame > 0 )
+				ss << std::fixed << std::setprecision( 2 ) << ms_per_frame << "ms";
+			else
+				ss << ( m_statisticsUpdateTime.asMicroseconds() / m_statisticsNumFrames ) << "us";
 
+			ss << "\nDuration: " << ( int )m_totalTime.getElapsedTime().asSeconds() << "s";
+
+			m_statisticsText = ss.str();
 			m_statisticsUpdateTime -= sf::seconds( 1.0f );
 			m_statisticsNumFrames = 0;
 		}

@@ -8,7 +8,7 @@ namespace Reflex
 	// Logging system
 	inline void LOG( const std::string& log ) { std::cout << log << "\n"; }
 
-	#define LOG_CRIT( x ) { assert( false ); LOG( Stream( "CRIT: (" << __FUNCTION__ << ") " << x ) ); }
+	#define LOG_CRIT( x ) { LOG( Stream( "CRIT: (" << __FUNCTION__ << ") " << x ) ); }
 	#define LOG_WARN( x ) LOG( Stream( "Warning: (" << __FUNCTION__ << ") " << x ) );
 	#define LOG_INFO( x ) LOG( Stream( "Info: " << x ) );
 	#define THROW( x ) throw std::runtime_error( Stream( "EXCEPTION: (" << __FUNCTION__ << ") " << x ) );

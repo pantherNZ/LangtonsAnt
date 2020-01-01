@@ -35,7 +35,7 @@ namespace Reflex
 		bool contains( const T& t ) const { return Find( t ) != end(); }
 		bool empty() const { return m_vector.empty(); }
 		void resize( const unsigned size ) { m_vector.resize( size ); }
-		unsigned size() const { return m_vector.size(); }
+		unsigned size() const { return ( unsigned )m_vector.size(); }
 
 		iterator begin() { return m_vector.begin(); }
 		iterator end() { return m_vector.end(); }
