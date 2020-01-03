@@ -53,7 +53,7 @@ namespace Reflex
 	};
 
 	// Helper functions
-	inline int Mod( int a, int b )
+	constexpr inline int Mod( int a, int b )
 	{
 		return ( ( a %= b ) < 0 ) ? a + b : a;
 	}
@@ -111,27 +111,39 @@ namespace Reflex
 	}
 
 	template< typename T >
-	inline T Clamp( T x, T min, T max )
+	constexpr inline T Clamp( const T& x, const T& min, const T& max )
 	{
 		return std::min( max, std::max( min, x ) );
 	}
 
 	template< typename T >
-	inline T Clamp( T x )
+	constexpr inline T Clamp( const T& x )
 	{
-		return std::min( ( T )1.0, std::max( ( T )0.0, x ) );
+		return std::min( static_cast< T >( 1.0 ), std::max( static_cast< T >( 0.0 ), x ) );
 	}
 
 	template< typename T >
-	inline T Sign( T x )
+	constexpr inline T Sign( const T& x )
 	{
 		return T( ( double )x > 0.0f ? 1.0 : ( double )x < 0.0 ? -1.0f : 0.0f );
+	}
+
+	template< typename T >
+	constexpr inline T Lerp( const T& a, const T& b, const float t )
+	{
+		return static_cast< T >( a + ( b - a ) * Clamp( t ) );
+	}
+
+	template< typename T >
+	constexpr inline T InverseLerp( const T& a, const T& b, const float t )
+	{
+		return static_cast< T >( ( t - a ) / ( b - a ) );
 	}
 
 	// String functions
 	std::vector< std::string > Split( const std::string& _strInput, const char _cLetter );
 
-	inline bool IsSpace( const char c )
+	constexpr inline bool IsSpace( const char c )
 	{
 		return c == ' ' || c == '\t';
 	}
@@ -208,14 +220,21 @@ namespace Reflex
 		return sf::Vector2i( ( int )convert.x, ( int )convert.y );
 	}
 
-	inline sf::Color ToSFColour( const std::array< float, 3 >& colour )
+	inline sf::Color ToColour( const std::array< float, 3 >& colour )
 	{
-		return sf::Color( sf::Uint8( colour[0] * 255 ), sf::Uint8( colour[1] * 255 ), sf::Uint8( colour[2] * 255 ) );
+		return sf::Color( 
+			sf::Uint8( colour[0] * 255 ), 
+			sf::Uint8( colour[1] * 255 ), 
+			sf::Uint8( colour[2] * 255 ) );
 	}
 
-	inline sf::Color ToSFColour( const std::array< float, 4 >& colour )
+	inline sf::Color ToColour( const std::array< float, 4 >& colour )
 	{
-		return sf::Color( sf::Uint8( colour[0] * 255 ), sf::Uint8( colour[1] * 255 ), sf::Uint8( colour[2] * 255 ), sf::Uint8( colour[3] * 255 ) );
+		return sf::Color( 
+			sf::Uint8( colour[0] * 255 ), 
+			sf::Uint8( colour[1] * 255 ), 
+			sf::Uint8( colour[2] * 255 ), 
+			sf::Uint8( colour[3] * 255 ) );
 	}
 
 	inline std::array< float, 3 > ToImGuiColour3( const sf::Color& colour )
@@ -223,9 +242,56 @@ namespace Reflex
 		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f };
 	}
 
-	inline std::array< float, 4 > ToImGuiColour4( const sf::Color & colour )
+	inline std::array< float, 4 > ToImGuiColour4( const sf::Color& colour )
 	{
 		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f, colour.a / 255.0f };
+	}
+
+	inline sf::Color RandomColour()
+	{
+		return sf::Color( 
+			RandomInt( 255 ), 
+			RandomInt( 255 ), 
+			RandomInt( 255 ), 255 );
+	}
+
+	inline sf::Color BlendColourLinear( const sf::Color& colourA, const sf::Color& colourB, const float percent = 0.5f )
+	{
+		return sf::Color(
+			Lerp( colourA.r, colourB.r, 0.5f ),
+			Lerp( colourA.g, colourB.g, 0.5f ),
+			Lerp( colourA.b, colourB.b, 0.5f ),
+			Lerp( colourA.a, colourB.a, 0.5f ) );
+	}
+
+	inline float BlendGammaCorrection( const float a, const float b, const float percent = 0.5f )
+	{
+		const auto t = Clamp( percent );
+		return sqrt( ( 1.0f - t ) * std::pow( a, 2.2f ) + t * std::pow( b, 2.2f ) );
+	}
+
+	inline sf::Color BlendColourGammaCorrection( const sf::Color& colourA, const sf::Color& colourB, const float percent = 0.5f )
+	{
+		return sf::Color(
+			sf::Uint8( BlendGammaCorrection( colourA.r / 255.0f, colourB.r / 255.0f, 0.5f ) * 255 ),
+			sf::Uint8( BlendGammaCorrection( colourA.g / 255.0f, colourB.g / 255.0f, 0.5f ) * 255 ),
+			sf::Uint8( BlendGammaCorrection( colourA.b / 255.0f, colourB.b / 255.0f, 0.5f ) * 255 ),
+			sf::Uint8( Lerp( colourA.a / 255.0f, colourB.a / 255.0f, 0.5f ) * 255 ) );
+	}
+
+	inline sf::Color BlendColourDivideAlpha( const sf::Color& colourA, const sf::Color& colourB, const float percent = 0.5f )
+	{
+		sf::Color r;
+		const float Aa = colourA.a / 255.0f;
+		const float Ba = colourB.a / 255.0f;
+		const float newA = 1.0f - ( 1.0f - Ba ) * ( 1.0f - Aa );
+		if( r.a < 1.0e-6 ) 
+			return r;
+		r.r = sf::Uint8( ( ( colourB.r / 255.0f ) * Ba / newA + ( colourA.r / 255.0f ) * Aa * ( 1 - Ba ) / newA ) * 255 );
+		r.g = sf::Uint8( ( ( colourB.g / 255.0f ) * Ba / newA + ( colourA.g / 255.0f ) * Aa * ( 1 - Ba ) / newA ) * 255 );
+		r.b = sf::Uint8( ( ( colourB.b / 255.0f ) * Ba / newA + ( colourA.b / 255.0f ) * Aa * ( 1 - Ba ) / newA ) * 255 );
+		r.a = sf::Uint8( newA * 255 );
+		return r;
 	}
 
 	// Useful math functions

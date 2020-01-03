@@ -130,7 +130,6 @@ namespace Reflex::Core
 	{
 		m_window.clear( sf::Color::Black );
 		m_stateManager.Render();
-		m_window.setView( m_window.getDefaultView() );
 
 		ImGui::SetNextWindowPos( sf::Vector2( 5.0f, 5.0f ), ImGuiCond_::ImGuiCond_Once );
 		ImGui::SetNextWindowSize( sf::Vector2( 200.0f, 200.0f ), ImGuiCond_::ImGuiCond_Once );

@@ -152,12 +152,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="LangtonsAnt.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReflexEngine\ReflexEngine.vcxproj">
       <Project>{21e5ab50-28b8-44c0-b20e-01637bed9f76}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LangtonsAnt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

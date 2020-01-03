@@ -126,6 +126,9 @@
     <ClInclude Include="JSON\json\json.h">
       <Filter>JSON</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TransformComponent.cpp">
@@ -193,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="JSON\jsoncpp.cpp">
       <Filter>JSON</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
