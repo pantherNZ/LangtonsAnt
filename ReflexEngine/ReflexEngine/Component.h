@@ -8,13 +8,17 @@ namespace Reflex::Core { class Object; }
 
 namespace Reflex::Components
 {
+	typedef Handle< class Component > ComponentHandle;
+	typedef Handle< const class Component > ComponentHandleConst;
+
 	class Component : public std::enable_shared_from_this< Component >
 	{
 	public:
 		friend class Reflex::Core::Object;
 
 		ObjectHandle GetObject() const { return m_object; }
-		Handle< Component > GetHandle() { return Handle< Component >( shared_from_this() ); }
+		ComponentHandle GetHandle() { return ComponentHandle( shared_from_this() ); }
+		ComponentHandleConst GetHandle() const { return ComponentHandleConst( shared_from_this() ); }
 		virtual void SetOwningObject( const ObjectHandle& owner ) { m_object = owner; }
 
 	protected:

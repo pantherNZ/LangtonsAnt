@@ -121,13 +121,13 @@ namespace Reflex
 
 		void InteractableSystem::OnComponentAdded()
 		{
-			const auto newComponent = GetSystemComponent< Interactable >( m_components.back() );
+			auto newComponent = GetSystemComponent< Interactable >( m_components.back() );
 
 			if( newComponent->m_replaceCollisionObject )
 			{
 				for( auto& set : m_components )
 				{
-					const auto obj = Handle< SFMLObject >( set[2] );
+					const auto obj = SFMLObjectHandle( set[2] );
 
 					if( obj->GetObject() == newComponent->m_replaceCollisionObject->GetObject() )
 					{
@@ -136,7 +136,7 @@ namespace Reflex
 					}
 				}
 
-				newComponent->m_replaceCollisionObject = SFMLObjectHandle();
+				newComponent->m_replaceCollisionObject.Reset();
 			}
 		}
 

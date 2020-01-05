@@ -27,6 +27,7 @@ namespace Reflex::Core
 		void RequestRemoveAllStates();
 
 		sf::RenderWindow& GetWindow() { return m_context.window; }
+		World& GetWorld() { return m_world; }
 		TextureManager& GetTextureManager() { return m_context.textureManager; }
 		FontManager& GetFontManager() { return m_context.fontManager; }
 

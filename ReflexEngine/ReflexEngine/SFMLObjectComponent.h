@@ -5,6 +5,7 @@
 namespace Reflex::Components
 {
 	typedef Handle< class SFMLObject > SFMLObjectHandle;
+	typedef Handle< const class SFMLObject > SFMLObjectHandleConst;
 
 	enum class SFMLObjectType : char
 	{
@@ -27,6 +28,9 @@ namespace Reflex::Components
 		SFMLObject( const sf::Text& text, const sf::Color& colour = sf::Color::White );
 		SFMLObject( const SFMLObject& other );
 		~SFMLObject() { }
+
+		SFMLObjectHandle GetHandle() { return SFMLObjectHandle( shared_from_this() ); }
+		SFMLObjectHandleConst GetHandle() const { return SFMLObjectHandleConst( shared_from_this() ); }
 
 		// Get functions
 		sf::CircleShape& GetCircleShape();

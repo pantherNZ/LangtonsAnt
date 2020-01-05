@@ -4,6 +4,7 @@
 #include "Precompiled.h"
 #include "ResourceManager.h"
 #include "StateManager.h"
+#include "Object.h"
 
 namespace Reflex::Core
 {

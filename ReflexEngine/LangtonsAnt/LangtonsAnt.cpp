@@ -1,5 +1,6 @@
 // Includes
 #include "LangtonsAnt.h"
+#include "../ReflexEngine/CameraComponent.h"
 
 // Entry point
 int main()
@@ -14,9 +15,10 @@ int main()
 GameState::GameState( StateManager& stateManager, Context context )
 	: State( stateManager, context )
 	, antPlacerDisplay( 10.0f )
-	, size( 100.0f )
-	, camera( Reflex::Vector2iToVector2f( context.window.getPosition() ), Reflex::Vector2uToVector2f( context.window.getSize() ), context )
 {
+	camera = GetWorld().CreateObject()->AddComponent< Reflex::Components::Camera >( Reflex::Vector2uToVector2f( context.window.getSize() ) / 2.0f, Reflex::Vector2uToVector2f( context.window.getSize() ) );
+	camera->SetActiveCamera();
+
 	antPlacerDisplay.setFillColor( sf::Color(255, 0, 0, 128 ) );
 	Reflex::CenterOrigin( antPlacerDisplay );
 
@@ -39,7 +41,7 @@ void GameState::SetupGrid()
 		tileSize = sf::Vector2f( 1.0f, 1.0f );
 	else if( gridTypeIdx == Hexagon )
 		tileSize.x = sqrtf( 3.0f ) * size / 2.0f;
-		
+
 	auto startColour = Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[0].first );
 
 	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
@@ -58,8 +60,8 @@ void GameState::SetupGrid()
 		{
 			for( unsigned x = 0; x < gridSize.x; ++x )
 			{
-				const auto r = Reflex::RandomInt( 255 );
-				startColour = sf::Color( r, r, r, 255 );
+				//const auto r = Reflex::RandomInt( 255 );
+				//startColour = sf::Color( r, r, r, 255 );
 				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x, y * heightGap );
 
 				if( usePoints )
@@ -85,8 +87,8 @@ void GameState::SetupGrid()
 		{
 			for( unsigned x = 0; x < gridSize.x; ++x )
 			{
-				const auto r = Reflex::RandomInt( 255 );
-				startColour = sf::Color( r, r, r, 120 );
+				//const auto r = Reflex::RandomInt( 255 );
+				//startColour = sf::Color( r, r, r, 120 );
 				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x + ( y & 1 ? tileSize.x / 2.0f : 0.0f ), y * heightGap );
 				const auto m = sf::Vertex( pos, startColour );
 				const auto a = sf::Vertex( pos + sf::Vector2f( 0.0f, tileSize.y / 2.0f ), startColour );
@@ -115,7 +117,6 @@ void GameState::Reset( const bool resetGridCcolours )
 	
 	activeAnts = ants.size();
 	generation = 0;
-	updateTime = speedValues[speedIdx];
 	placingAnts = false;
 
 	if( resetGridCcolours )
@@ -128,7 +129,7 @@ void GameState::Reset( const bool resetGridCcolours )
 
 void GameState::Update( const float deltaTime )
 {
-	//UpdateAnts( deltaTime );
+	UpdateAnts( 0.033f );
 	UpdateCamera( deltaTime );
 }
 
@@ -170,24 +171,27 @@ void GameState::UpdateAnts( const float deltaTime )
 			ant.currentDir = Reflex::Modf( ant.currentDir + customStates[currentStateInfo].coloursAndAngles[gridStates[idx]].second, PI2 );
 
 			// Flip tile
-			assert( idx >= 0 && ( tileSize.x <= 1.0f ? idx : idx * 4 + 3 ) < gridVertices.size() );
+			const auto count = ( idx + 1 ) * ( tileSize.x <= 1.0f ? 1 : gridTypeIdx == Hexagon ? 18 : 4 );
+			assert( idx >= 0 && count - 1 < gridVertices.size() );
 			gridStates[idx] = ( gridStates[idx] + 1 ) % customStates[currentStateInfo].statesCount;
 			SetTileColour( gridIndex, Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[gridStates[idx]].first ), ( GameState::BlendValue )blendIdx );
 
 			// Move
 			ant.currentPos.x += std::cosf( ant.currentDir ) * tileSize.x;
-			ant.currentPos.y += std::sinf( ant.currentDir ) * tileSize.y;
+			ant.currentPos.y += std::sinf( ant.currentDir ) * tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 		}
 	}
 }
 
 void GameState::UpdateCamera( const float deltaTime )
 {
-	const auto vertical = Reflex::Sign( (int )sf::Keyboard::isKeyPressed( sf::Keyboard::Down ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Up ) );
-	const auto horizontal = Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Right ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Left ) );
+	const auto verticalA = Reflex::Sign( (int )sf::Keyboard::isKeyPressed( sf::Keyboard::Down ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Up ) );
+	const auto verticalB = Reflex::Sign( (int )sf::Keyboard::isKeyPressed( sf::Keyboard::S ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::W ) );
+	const auto horizontalA = Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Right ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Left ) );
+	const auto horizontalB = Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::D ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::A ) );
 
-	if( vertical || horizontal )
-		camera.GetView().move( deltaTime * sf::Vector2f( ( float )horizontal, ( float )vertical ) * cameraSpeed );
+	if( verticalA || verticalB || horizontalA || horizontalB )
+		camera->move( deltaTime * sf::Vector2f( ( float )horizontalA + ( float )horizontalB, ( float )verticalA + ( float )verticalB ) * cameraSpeed );
 }
 
 sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
@@ -201,24 +205,14 @@ sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 	const auto x = pos.x - gridOrigin.x;
 	const auto y = pos.y - gridOrigin.y - ( size - heightGap ) + offset;
+
 	auto row = Reflex::RoundToInt( y / heightGap );
-
-	int column;
 	const auto rowIsOdd = row & 1;
-
-	if( rowIsOdd )
-		column = Reflex::RoundToInt( ( x - halfSizeX ) / tileSize.x );
-	else
-		column = Reflex::RoundToInt( x / tileSize.x );
+	auto column = Reflex::RoundToInt( ( rowIsOdd ? x - halfSizeX : x ) / tileSize.x );
 
 	const auto c = halfSizeX / 2.0f;
 	const auto relY = y - row * ( heightGap - 1 ) + c;
-	float relX;
-	
-	if( rowIsOdd )
-		relX = Reflex::Modf( x, tileSize.x );
-	else
-		relX = Reflex::Modf( x + halfSizeX, tileSize.x );
+	const auto relX = Reflex::Modf( rowIsOdd ? x : x + halfSizeX, tileSize.x );
 
 	const auto m = c / halfSizeX;
 	if( relX < halfSizeX && relY < ( -m * relX ) + c )
@@ -259,12 +253,12 @@ void GameState::ProcessEvent( const sf::Event& event )
 
 		if( event.mouseWheelScroll.delta < 0 )
 		{
-			camera.GetView().zoom( zoomSpeed );
+			camera->zoom( zoomSpeed );
 			cameraZoom *= zoomSpeed;
 		}
 		else
 		{
-			camera.GetView().zoom( 1.0f / zoomSpeed );
+			camera->zoom( 1.0f / zoomSpeed );
 			cameraZoom *= ( 1.0f / zoomSpeed );
 		}
 	}
@@ -272,8 +266,6 @@ void GameState::ProcessEvent( const sf::Event& event )
 
 void GameState::Render()
 {
-	//GetWindow().setView( camera.GetView() );
-
 	GetWindow().draw( gridVertices.data(), gridVertices.size(), gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	const auto mousePos = Reflex::Vector2iToVector2f( sf::Mouse::getPosition( GetWindow() ) );
 
@@ -292,26 +284,25 @@ void GameState::Render()
 		}
 	}
 
-	static sf::Vector2i highlight( -999, 0 );
-	const auto newHighlight = FindGridIndex( mousePos );
-
-	if( newHighlight != highlight && newHighlight.x >= 0 && newHighlight.y >= 0 && newHighlight.x < gridSize.x && newHighlight.y < gridSize.y )
-	{
-		static sf::Color oldColour;
-
-		if( highlight.x != -999 )
-			SetTileColour( highlight, oldColour );
-
-		highlight = newHighlight;
-		const auto idx = ( highlight.y * gridSize.x + highlight.x ) * 18;
-		oldColour = gridVertices[idx].color;
-
-		SetTileColour( newHighlight, sf::Color::Magenta );
-	}
+	//static sf::Vector2i highlight( -999, 0 );
+	//const auto newHighlight = FindGridIndex( mousePos );
+	//
+	//if( newHighlight != highlight && newHighlight.x >= 0 && newHighlight.y >= 0 && newHighlight.x < gridSize.x && newHighlight.y < gridSize.y )
+	//{
+	//	static sf::Color oldColour;
+	//
+	//	if( highlight.x != -999 )
+	//		SetTileColour( highlight, oldColour );
+	//
+	//	highlight = newHighlight;
+	//	const auto idx = ( highlight.y * gridSize.x + highlight.x ) * 18;
+	//	oldColour = gridVertices[idx].color;
+	//
+	//	SetTileColour( newHighlight, sf::Color::Magenta );
+	//}
 
 	// Draw settings / display UI
 	ImGui::SetNextWindowPos( sf::Vector2( 5.0f, 0.17f * GetWindow().getSize().y ), ImGuiCond_::ImGuiCond_Once );
-	ImGui::SetNextWindowSize( sf::Vector2( 400.0f, 400.0f ), ImGuiCond_::ImGuiCond_Once );
 	ImGui::Begin( "Langton's Ant", nullptr, ImGuiWindowFlags_AlwaysAutoResize );
 	ImGui::Text( ( "Generation " + std::to_string( generation ) ).c_str() );
 	ImGui::Separator();
@@ -331,20 +322,8 @@ void GameState::Render()
 		}
 	}
 
-	ImGui::NewLine();
-
-	// Handler for radio buttons for adjusting speed
-	{
-		const auto prev = speedIdx;
-		ImGui::Text( "Update Speed" );
-		ImGui::RadioButton( "Pause", &speedIdx, Pause ); ImGui::SameLine();
-		ImGui::RadioButton( "Slow", &speedIdx, Slow ); ImGui::SameLine();
-		ImGui::RadioButton( "Regular", &speedIdx, Regular ); ImGui::SameLine();
-		ImGui::RadioButton( "Fast", &speedIdx, Fast ); ImGui::SameLine();
-		ImGui::RadioButton( "Very Fast", &speedIdx, VeryFast );
-
-		if( prev != speedIdx )
-			updateTime = speedValues[speedIdx];
+	// Manual speed adjustment with slider
+	ImGui::SliderFloat( "Update Interval", &updateTime, 0.3f, 0.0f, "%.5f", 0.15f );
 
 		const auto g = floorf( log10f( ( float )stepTo ) );
 		const auto baseRate = std::max( 100, ( int )powf( 10.0f, g ) );
@@ -354,13 +333,9 @@ void GameState::Render()
 			baseRate,										// Increment
 			std::max( 100, ( int )powf( 10.0f, g + 1 ) ) );	// Increment fast
 		stepTo = std::max( 0, stepTo );
-	}
-
-	// Manual speed adjustment with slider
-	ImGui::SliderFloat( "Update Time", &updateTime, 0.0f, 0.5f );
 
 	// Number of states for this sim
-	if( ImGui::SliderInt( "State Count", &customStates[currentStateInfo].statesCount, 2, 20 ) )
+	if( ImGui::SliderInt( "State Count", &customStates[currentStateInfo].statesCount, 2, 50 ) )
 	{
 		while( customStates[currentStateInfo].coloursAndAngles.size() < (unsigned )customStates[currentStateInfo].statesCount )
 		{
@@ -477,8 +452,12 @@ void GameState::Render()
 	{
 		// Button for resetting generations & the simulation display
 		ImGui::SameLine();
-		if( ImGui::Button( "Reset Simulation" ) )
+		if( ImGui::Button( "Restart" ) )
 			Reset();
+
+		ImGui::SameLine();
+		if( ImGui::Button( "Random Simulation" ) )
+			RandomiseParameters();
 	}
 
 	ImGui::End();
@@ -519,6 +498,72 @@ void GameState::Recolour()
 	for( unsigned y = 0; y < gridSize.y; ++y )
 		for( unsigned x = 0; x < gridSize.x; ++x )
 			SetTileColour( sf::Vector2i( x, y ), Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[gridStates[y * gridSize.x + x] % customStates[currentStateInfo].statesCount].first ) );
+}
+
+void GameState::RandomiseParameters()
+{
+	ants.clear();
+
+	const auto centre = sf::Vector2f( GetWindow().getSize().x / 2.0f, GetWindow().getSize().y / 2.0f );
+	if( Reflex::RandomBool() )
+	{
+		ants.emplace_back( centre, Reflex::RandomAngle() );
+	}
+	else
+	{
+		const auto distMaxX = Reflex::RandomFloat( 4.0f, GetWindow().getSize().x / Reflex::RandomFloat( 1.0f, 10.0f ) ) / 2.0f;
+		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 1.0f, 10.0f ) ) / 2.0f;
+		const auto minX = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxX / Reflex::RandomFloat( 1.1f, 2.0f ) );
+		const auto minY = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxY / Reflex::RandomFloat( 1.1f, 2.0f ) );
+		for( int i = 0; i < Reflex::RandomInt( 50 ); ++i )
+		{
+			const auto randomX = Reflex::RandomFloat( -distMaxX, distMaxX );
+			const auto randomY = Reflex::RandomFloat( -distMaxY, distMaxY );
+			ants.emplace_back( centre + sf::Vector2f( randomX + Reflex::Sign( randomX ) * minX, randomY + Reflex::Sign( randomY ) * minY ), Reflex::RandomAngle() );
+		}
+	}
+
+	incrementalAlpha = Reflex::RandomBool();
+	incrementalRGB = Reflex::RandomBool();
+	blendIdx = Reflex::RandomInt( NumBlendTypes );
+
+	const auto statesCount = Reflex::RandomInt( 50 );
+	customStates[currentStateInfo].statesCount = 0;
+	customStates[currentStateInfo].coloursAndAngles.clear();
+	customStates[currentStateInfo].Append( sf::Color::Black, Reflex::RandomAngle() );
+
+	if( incrementalRGB )
+		customStates[currentStateInfo].Append( Reflex::RandomColour( incrementalAlpha, Reflex::RandomInt( 0, 50 ) ), Reflex::RandomAngle() );
+
+	auto previousColour = customStates[currentStateInfo].coloursAndAngles.back().first;
+	const auto mode = Reflex::RandomInt( 5 );
+	auto previousAngle = Reflex::RandomAngle();
+
+	while( customStates[currentStateInfo].statesCount < statesCount )
+	{
+		const auto angle = mode == 0 ? Reflex::RandomBool() : Reflex::RandomInt( 5 ) ? previousAngle : Reflex::RandomAngle();
+		customStates[currentStateInfo].Append( Reflex::RandomColour( blendIdx == Alpha ), angle );
+		previousAngle = angle;
+	}
+
+	if( incrementalAlpha || incrementalRGB )
+	{
+		UpdateIncrementalColours();
+
+		if( Reflex::RandomBool() && statesCount > 6 )
+		{
+			const auto count = 2 + Reflex::RandomInt( statesCount / Reflex::RandomInt( 3, statesCount / 2 ) );
+
+			for( int i = 0; i < count; ++i )
+			{
+				const auto idx = 1 + ( statesCount / count ) * i;
+				customStates[currentStateInfo].coloursAndAngles[idx].first = Reflex::ToImGuiColour4( Reflex::RandomColour( blendIdx == Alpha, Reflex::RandomInt( 10, 50 ) ) );
+				UpdateIncrementalColours( idx );
+			}
+		}
+	}
+
+	Reset();
 }
 
 void GameState::SaveCustomSetups()

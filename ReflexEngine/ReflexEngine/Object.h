@@ -9,6 +9,7 @@
 namespace Reflex
 {
 	typedef Handle< class Reflex::Core::Object > ObjectHandle;
+	typedef Handle< const class Reflex::Core::Object > ObjectHandleConst;
 }
 
 namespace Reflex::Core
@@ -62,6 +63,7 @@ namespace Reflex::Core
 
 		Reflex::Components::TransformHandle GetTransform() const;
 		ObjectHandle GetHandle() { return ObjectHandle( shared_from_this() ); }
+		ObjectHandleConst GetHandle() const { return ObjectHandleConst( shared_from_this() ); }
 
 		World& GetWorld() const;
 

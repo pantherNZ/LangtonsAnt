@@ -2,23 +2,20 @@
 
 #include "ResourceManager.h"
 
-namespace Reflex
+namespace Reflex::Core
 {
-	namespace Core
+	// Context struct (passed around to access window & various useful managers)
+	struct Context
 	{
-		// Context struct (passed around to access window & various useful managers)
-		struct Context
+		Context( sf::RenderWindow& window, TextureManager& textureManager, FontManager& fontManager )
+			: window( window )
+			, textureManager( textureManager )
+			, fontManager( fontManager )
 		{
-			Context( sf::RenderWindow& _window, TextureManager& _textureManager, FontManager& _fontManager )
-				: window( _window )
-				, textureManager( _textureManager )
-				, fontManager( _fontManager )
-			{
-			}
+		}
 
-			sf::RenderWindow& window;
-			TextureManager& textureManager;
-			FontManager& fontManager;
-		};
-	}
+		sf::RenderWindow& window;
+		TextureManager& textureManager;
+		FontManager& fontManager;
+	};
 }

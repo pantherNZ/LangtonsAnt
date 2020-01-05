@@ -63,7 +63,7 @@ namespace Reflex::Core
 
 	void World::Render()
 	{
-		GetWindow().setView( m_worldView );
+		GetWindow().setView( activeCamera ? *activeCamera : m_worldView );
 
 		for( auto& object : m_objects )
 			GetWindow().draw( *object );
@@ -152,5 +152,22 @@ namespace Reflex::Core
 			iter->second->m_components.insert( insertionIter, std::move( tempList ) );
 			iter->second->OnComponentAdded();
 		}
+	}
+
+	bool World::IsActiveCamera( const Reflex::Components::CameraHandleConst& camera ) const
+	{
+		return camera && activeCamera == camera;
+	}
+
+	void World::SetActiveCamera( const Reflex::Components::CameraHandle& camera )
+	{
+		if( !camera )
+		{
+			LOG_CRIT( "World::SetActiveCamera called with an invalid camera component handle" );
+			return;
+		}
+
+		activeCamera = camera;
+		GetWindow().setView( *activeCamera );
 	}
 }

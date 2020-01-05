@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "System.h"
 #include "TransformComponent.h"
+#include "CameraComponent.h"
 
 // Engine class
 namespace Reflex::Core
@@ -51,6 +52,9 @@ namespace Reflex::Core
 
 		void AddComponentToSystems( const ObjectHandle& owner, const Handle< Reflex::Components::Component >& componentHandle, const Type& componentType );
 
+		bool IsActiveCamera( const Reflex::Components::CameraHandleConst& camera ) const;
+		void SetActiveCamera( const Reflex::Components::CameraHandle& camera );
+
 	protected:
 		void Setup();
 
@@ -74,6 +78,8 @@ namespace Reflex::Core
 
 		// Removes objects / components on frame move instead of during sometime dangerous
 		std::vector< ObjectHandle > m_markedForDeletion;
+
+		Reflex::Components::CameraHandle activeCamera;
 	};
 
 	// Template functions

@@ -94,6 +94,11 @@ namespace Reflex
 		return RandomFloat( 0.0f, max );
 	}
 
+	inline float RandomAngle()
+	{
+		return RandomFloat( 0.0f, PI2 );
+	}
+
 	inline float Round( float value )
 	{
 		return std::round( value );
@@ -247,12 +252,13 @@ namespace Reflex
 		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f, colour.a / 255.0f };
 	}
 
-	inline sf::Color RandomColour()
+	inline sf::Color RandomColour( const bool randomAlpha = false, const int maxMagnitude = 255 )
 	{
 		return sf::Color( 
-			RandomInt( 255 ), 
-			RandomInt( 255 ), 
-			RandomInt( 255 ), 255 );
+			RandomInt( maxMagnitude ),
+			RandomInt( maxMagnitude ),
+			RandomInt( maxMagnitude ),
+			randomAlpha ? RandomInt( maxMagnitude ) : 255 );
 	}
 
 	inline sf::Color BlendColourLinear( const sf::Color& colourA, const sf::Color& colourB, const float percent = 0.5f )

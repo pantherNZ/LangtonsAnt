@@ -1,6 +1,5 @@
 // Includes
 #include "../ReflexEngine/Engine.h"
-#include "../ReflexEngine/Camera.h"
 
 using namespace Reflex::Core;
 
@@ -22,6 +21,7 @@ protected:
 	void UpdateIncrementalColours( const unsigned startIdx = 1 );
 
 	void Recolour();
+	void RandomiseParameters();
 	sf::Vector2i FindGridIndex( const sf::Vector2f& pos );
 
 	void SaveCustomSetups();
@@ -29,16 +29,16 @@ protected:
 
 protected:
 	// Data Members
-	Reflex::Core::Camera camera;
+	Reflex::Components::CameraHandle camera;
 	const float cameraSpeed = 500.0f;
-	const float zoomSpeed = 1.1f;
+	const float zoomSpeed = 1.05f;
 	const float margin = 0.0f;
-	float size = 100.0f;
+	float size = 10.0f;
 	sf::Vector2u gridSize;
 	sf::Vector2f tileSize;
 	sf::Vector2f gridOrigin;
 	float timer = 0.5f;
-	float updateTime = 0.1f;
+	float updateTime = 0.01f;
 	unsigned generation = 0;
 	int stepTo = 0;
 
@@ -47,25 +47,12 @@ protected:
 		Disable,
 		Gamma,
 		Alpha,
-		NumBlends,
+		NumBlendTypes,
 	};
 
 	int blendIdx = Disable;
 
 	void SetTileColour( const sf::Vector2i& index, const sf::Color& colour, const BlendValue blend = Disable );
-
-	enum SpeedValue
-	{
-		VeryFast,
-		Fast,
-		Regular,
-		Slow,
-		Pause,
-		NumSpeeds
-	};
-
-	int speedIdx = Regular;
-	std::array< float, NumSpeeds > speedValues = { 0.001f, 0.01f, 0.08f, 0.3f, 0.0f };
 
 	std::vector< sf::Vertex > gridVertices;
 	std::vector< int > gridStates;
@@ -87,7 +74,7 @@ protected:
 		NumGridTypes,
 	};
 
-	int gridTypeIdx = Hexagon;
+	int gridTypeIdx = Square;
 
 	bool incrementalRGB = false;
 	bool incrementalAlpha = false;
