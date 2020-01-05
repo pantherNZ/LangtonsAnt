@@ -14,7 +14,7 @@ int main()
 GameState::GameState( StateManager& stateManager, Context context )
 	: State( stateManager, context )
 	, antPlacerDisplay( 10.0f )
-	, tileSize( 100.0f, 100.0f )
+	, size( 100.0f )
 	, camera( Reflex::Vector2iToVector2f( context.window.getPosition() ), Reflex::Vector2uToVector2f( context.window.getSize() ), context )
 {
 	antPlacerDisplay.setFillColor( sf::Color(255, 0, 0, 128 ) );
@@ -31,20 +31,22 @@ void GameState::SetupGrid()
 {
 	gridStates.clear();
 	gridVertices.clear();
-	
-	tileSize.y = tileSize.x;
+
+	tileSize.x = size;
+	tileSize.y = size;
 
 	if( gridTypeIdx == Pixel )
 		tileSize = sf::Vector2f( 1.0f, 1.0f );
 	else if( gridTypeIdx == Hexagon )
-		tileSize.y = tileSize.x * 0.75f + ( tileSize.x / 2.0f - ( sqrtf( 3.0f ) * tileSize.x / 2.0f ) / 2.0f );
+		tileSize.x = sqrtf( 3.0f ) * size / 2.0f;
 		
 	auto startColour = Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[0].first );
 
+	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 	gridSize.x = ( unsigned )ceil( GetWindow().getSize().x / tileSize.x );
-	gridSize.y = ( unsigned )ceil( GetWindow().getSize().y / tileSize.y );
+	gridSize.y = ( unsigned )ceil( GetWindow().getSize().y / heightGap );
 	gridStates.resize( gridSize.x * gridSize.y );
-	gridOrigin = sf::Vector2f( GetWindow().getSize().x / 2.0f - gridSize.x / 2.0f * tileSize.x, GetWindow().getSize().y / 2.0f - gridSize.y / 2.0f * tileSize.y );
+	gridOrigin = sf::Vector2f( GetWindow().getSize().x / 2.0f - gridSize.x / 2.0f * tileSize.x, GetWindow().getSize().y / 2.0f - gridSize.y / 2.0f * heightGap );
 
 	if( gridTypeIdx == Square || gridTypeIdx == Pixel )
 	{
@@ -58,7 +60,7 @@ void GameState::SetupGrid()
 			{
 				const auto r = Reflex::RandomInt( 255 );
 				startColour = sf::Color( r, r, r, 255 );
-				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x, y * tileSize.y );
+				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x, y * heightGap );
 
 				if( usePoints )
 				{
@@ -77,10 +79,7 @@ void GameState::SetupGrid()
 	else if( gridTypeIdx == Hexagon )
 	{
 		gridVertices.reserve( gridSize.x * gridSize.y * 18 );
-		const auto halfSizeX = tileSize.x / 2.0f;
-		const auto offset = ( sqrtf( 3.0f ) * halfSizeX ) / 2.0f;
-		const auto halfSizeY = halfSizeX;// +( halfSizeX - offset );
-		const auto dimensions = sf::Vector2f( halfSizeX, halfSizeY / 2.0f );
+		const auto dimensions = sf::Vector2f( tileSize.x / 2.0f, tileSize.y / 4.0f );
 
 		for( unsigned y = 0; y < gridSize.y; ++y )
 		{
@@ -88,12 +87,12 @@ void GameState::SetupGrid()
 			{
 				const auto r = Reflex::RandomInt( 255 );
 				startColour = sf::Color( r, r, r, 120 );
-				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x + ( y & 1 ? halfSizeX : 0.0f ), y * tileSize.y );
+				const auto pos = gridOrigin + sf::Vector2f( x * tileSize.x + ( y & 1 ? tileSize.x / 2.0f : 0.0f ), y * heightGap );
 				const auto m = sf::Vertex( pos, startColour );
-				const auto a = sf::Vertex( pos + sf::Vector2f( 0.0f, halfSizeY ), startColour );
+				const auto a = sf::Vertex( pos + sf::Vector2f( 0.0f, tileSize.y / 2.0f ), startColour );
 				const auto b = sf::Vertex( pos + sf::Vector2f( dimensions.x, dimensions.y ) , startColour );
 				const auto c = sf::Vertex( pos + sf::Vector2f( dimensions.x, -dimensions.y ), startColour );
-				const auto d = sf::Vertex( pos + sf::Vector2f( 0.0f, -halfSizeY ), startColour );
+				const auto d = sf::Vertex( pos + sf::Vector2f( 0.0f, -tileSize.y / 2.0f ), startColour );
 				const auto e = sf::Vertex( pos + sf::Vector2f( -dimensions.x, -dimensions.y ), startColour );
 				const auto f = sf::Vertex( pos + sf::Vector2f( -dimensions.x, dimensions.y ), startColour );
 				const auto newHexagon = { m, a, b, m, b, c, m, c, d, m, d, e, m, e, f, m, f, a };
@@ -129,7 +128,7 @@ void GameState::Reset( const bool resetGridCcolours )
 
 void GameState::Update( const float deltaTime )
 {
-	UpdateAnts( deltaTime );
+	//UpdateAnts( deltaTime );
 	UpdateCamera( deltaTime );
 }
 
@@ -199,9 +198,10 @@ sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 	// Hexagon
 	const auto halfSizeX = tileSize.x / 2.0f;
 	const auto offset = ( sqrtf( 3.0f ) * halfSizeX ) / 2.0f;
+	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 	const auto x = pos.x - gridOrigin.x;
-	const auto y = pos.y - gridOrigin.y - ( tileSize.x - tileSize.y ) + offset;
-	auto row = Reflex::RoundToInt( y / tileSize.y );
+	const auto y = pos.y - gridOrigin.y - ( size - heightGap ) + offset;
+	auto row = Reflex::RoundToInt( y / heightGap );
 
 	int column;
 	const auto rowIsOdd = row & 1;
@@ -212,7 +212,7 @@ sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 		column = Reflex::RoundToInt( x / tileSize.x );
 
 	const auto c = halfSizeX / 2.0f;
-	const auto relY = y - row * ( tileSize.y - 1 ) + c;
+	const auto relY = y - row * ( heightGap - 1 ) + c;
 	float relX;
 	
 	if( rowIsOdd )
@@ -272,7 +272,7 @@ void GameState::ProcessEvent( const sf::Event& event )
 
 void GameState::Render()
 {
-	GetWindow().setView( camera.GetView() );
+	//GetWindow().setView( camera.GetView() );
 
 	GetWindow().draw( gridVertices.data(), gridVertices.size(), gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	const auto mousePos = Reflex::Vector2iToVector2f( sf::Mouse::getPosition( GetWindow() ) );
@@ -295,19 +295,19 @@ void GameState::Render()
 	static sf::Vector2i highlight( -999, 0 );
 	const auto newHighlight = FindGridIndex( mousePos );
 
-	//if( newHighlight != highlight && newHighlight.x >= 0 && newHighlight.y >= 0 && newHighlight.x < width && newHighlight.y < height )
-	//{
-	//	static sf::Color oldColour;
-	//
-	//	if( highlight.x != -999 )
-	//		SetTileColour( highlight, oldColour );
-	//
-	//	highlight = newHighlight;
-	//	const auto idx = ( highlight.y * width + highlight.x ) * 18;
-	//	oldColour = gridVertices[idx].color;
-	//
-	//	SetTileColour( newHighlight, sf::Color::Magenta );
-	//}
+	if( newHighlight != highlight && newHighlight.x >= 0 && newHighlight.y >= 0 && newHighlight.x < gridSize.x && newHighlight.y < gridSize.y )
+	{
+		static sf::Color oldColour;
+
+		if( highlight.x != -999 )
+			SetTileColour( highlight, oldColour );
+
+		highlight = newHighlight;
+		const auto idx = ( highlight.y * gridSize.x + highlight.x ) * 18;
+		oldColour = gridVertices[idx].color;
+
+		SetTileColour( newHighlight, sf::Color::Magenta );
+	}
 
 	// Draw settings / display UI
 	ImGui::SetNextWindowPos( sf::Vector2( 5.0f, 0.17f * GetWindow().getSize().y ), ImGuiCond_::ImGuiCond_Once );
@@ -324,7 +324,7 @@ void GameState::Render()
 		ImGui::RadioButton( "Hexagon", &gridTypeIdx, Hexagon ); ImGui::SameLine();
 		ImGui::RadioButton( "Pixel", &gridTypeIdx, Pixel );
 
-		if( ImGui::InputFloat( "Grid Size", &tileSize.x, 1.0f, 5.0f, 1 ) || prev != gridTypeIdx )
+		if( ImGui::InputFloat( "Grid Size", &size, 1.0f, 5.0f, 1 ) || prev != gridTypeIdx )
 		{
 			SetupGrid();
 			Reset();

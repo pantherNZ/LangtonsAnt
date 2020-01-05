@@ -33,6 +33,7 @@ protected:
 	const float cameraSpeed = 500.0f;
 	const float zoomSpeed = 1.1f;
 	const float margin = 0.0f;
+	float size = 100.0f;
 	sf::Vector2u gridSize;
 	sf::Vector2f tileSize;
 	sf::Vector2f gridOrigin;
