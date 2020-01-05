@@ -31,11 +31,10 @@ protected:
 	// Data Members
 	Reflex::Core::Camera camera;
 	const float cameraSpeed = 500.0f;
-	const float zoomSpeed = 0.01f;
+	const float zoomSpeed = 1.1f;
 	const float margin = 0.0f;
-	unsigned width = 50;
-	unsigned height = 50;
-	float size = 100.0f;
+	sf::Vector2u gridSize;
+	sf::Vector2f tileSize;
 	sf::Vector2f gridOrigin;
 	float timer = 0.5f;
 	float updateTime = 0.1f;
