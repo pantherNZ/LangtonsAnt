@@ -129,7 +129,7 @@ void GameState::Reset( const bool resetGridCcolours )
 
 void GameState::Update( const float deltaTime )
 {
-	UpdateAnts( 0.033f );
+	UpdateAnts( deltaTime );
 	UpdateCamera( deltaTime );
 }
 
@@ -417,6 +417,9 @@ void GameState::Render()
 	if( ImGui::Checkbox( "Incremental Alpha", &incrementalAlpha ) )
 		UpdateIncrementalColours();
 
+	if( ImGui::Button( "Colour Smooth" ) )
+		ColourSmooth();
+
 	ImGui::NewLine();
 
 	static bool showSaveSetup = false;
@@ -493,6 +496,11 @@ void GameState::UpdateIncrementalColours( const unsigned startIdx )
 	Recolour();
 }
 
+void GameState::ColourSmooth()
+{
+
+}
+
 void GameState::Recolour()
 {
 	for( unsigned y = 0; y < gridSize.y; ++y )
@@ -515,7 +523,7 @@ void GameState::RandomiseParameters()
 		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 1.0f, 10.0f ) ) / 2.0f;
 		const auto minX = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxX / Reflex::RandomFloat( 1.1f, 2.0f ) );
 		const auto minY = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxY / Reflex::RandomFloat( 1.1f, 2.0f ) );
-		for( int i = 0; i < Reflex::RandomInt( 50 ); ++i )
+		for( int i = 0; i < 1 + ( Reflex::RandomInt( 4 ) == 0 ? 0 : Reflex::RandomInt( 30 ) ); ++i )
 		{
 			const auto randomX = Reflex::RandomFloat( -distMaxX, distMaxX );
 			const auto randomY = Reflex::RandomFloat( -distMaxY, distMaxY );
@@ -523,27 +531,41 @@ void GameState::RandomiseParameters()
 		}
 	}
 
-	incrementalAlpha = Reflex::RandomBool();
-	incrementalRGB = Reflex::RandomBool();
-	blendIdx = Reflex::RandomInt( NumBlendTypes );
-
-	const auto statesCount = Reflex::RandomInt( 50 );
+	const auto statesCount = 2 + ( Reflex::RandomBool() ? Reflex::RandomInt( 50 ) : Reflex::RandomInt( 500 ) );
 	customStates[currentStateInfo].statesCount = 0;
 	customStates[currentStateInfo].coloursAndAngles.clear();
 	customStates[currentStateInfo].Append( sf::Color::Black, Reflex::RandomAngle() );
 
+	incrementalAlpha = statesCount > 4 && Reflex::RandomInt( 4 ) != 0;
+	incrementalRGB = statesCount > 2 && Reflex::RandomBool();
+	blendIdx = Reflex::RandomInt( NumBlendTypes );
+
 	if( incrementalRGB )
 		customStates[currentStateInfo].Append( Reflex::RandomColour( incrementalAlpha, Reflex::RandomInt( 0, 50 ) ), Reflex::RandomAngle() );
 
-	auto previousColour = customStates[currentStateInfo].coloursAndAngles.back().first;
-	const auto mode = Reflex::RandomInt( 5 );
+	const auto mode = Reflex::RandomInt( 6 );
+	const auto colourMode = Reflex::RandomInt( 2 );
 	auto previousAngle = Reflex::RandomAngle();
+	auto previousColour = Reflex::RandomColour( blendIdx == Alpha );
+	const auto randomColourIncrement = Reflex::RandomInt( 5, 50 );
 
 	while( customStates[currentStateInfo].statesCount < statesCount )
 	{
-		const auto angle = mode == 0 ? Reflex::RandomBool() : Reflex::RandomInt( 5 ) ? previousAngle : Reflex::RandomAngle();
-		customStates[currentStateInfo].Append( Reflex::RandomColour( blendIdx == Alpha ), angle );
+		auto angle = mode == 0 ? Reflex::RandomBool() : ( mode == 1 && Reflex::RandomInt( 4 ) == 0 ) ? previousAngle : Reflex::RandomAngle();
+		auto colour = Reflex::RandomColour( blendIdx == Alpha );
+		
+		if( colourMode == 0 )
+			colour = sf::Color( 
+				Reflex::Clamp( ( int )previousColour.r + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), 
+				Reflex::Clamp( ( int )previousColour.g + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ),
+				Reflex::Clamp( ( int )previousColour.b + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), previousColour.a );
+
+		if( mode == 3 )
+			angle -= Reflex::Modf( angle, PI / Reflex::RandomInt( 1, 10 ) );
+
+		customStates[currentStateInfo].Append( colour, angle );
 		previousAngle = angle;
+		previousColour = colour;
 	}
 
 	if( incrementalAlpha || incrementalRGB )
