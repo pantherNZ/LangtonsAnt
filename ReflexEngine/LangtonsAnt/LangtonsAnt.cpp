@@ -20,9 +20,10 @@ GameState::GameState( StateManager& stateManager, Context context )
 	camera->SetActiveCamera();
 
 	antPlacerDisplay.setFillColor( sf::Color(255, 0, 0, 128 ) );
+	antPlacerDisplay2.setFillColor( sf::Color(255, 0, 0, 128 ) );
 	Reflex::CenterOrigin( antPlacerDisplay );
 
-	ants.emplace_back( sf::Vector2f( context.window.getSize().x / 2.0f, context.window.getSize().y / 2.0f ), PI );
+	ants.emplace_back( sf::Vector2f( context.window.getSize().x / 2.0f, context.window.getSize().y / 2.0f ), PI, sf::Color::White );
 
 	ReadCustomSetups();
 	SetupGrid();
@@ -37,20 +38,20 @@ void GameState::SetupGrid()
 	tileSize.x = size;
 	tileSize.y = size;
 
-	if( gridTypeIdx == Pixel )
+	if( GetInfo().gridTypeIdx == Pixel )
 		tileSize = sf::Vector2f( 1.0f, 1.0f );
-	else if( gridTypeIdx == Hexagon )
+	else if( GetInfo().gridTypeIdx == Hexagon )
 		tileSize.x = sqrtf( 3.0f ) * size / 2.0f;
 
-	auto startColour = Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[0].first );
+	auto startColour = Reflex::ToColour( GetInfo().coloursAndAngles[0].first );
 
-	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
+	const auto heightGap = tileSize.y * ( GetInfo().gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 	gridSize.x = ( unsigned )ceil( GetWindow().getSize().x / tileSize.x );
 	gridSize.y = ( unsigned )ceil( GetWindow().getSize().y / heightGap );
 	gridStates.resize( gridSize.x * gridSize.y );
 	gridOrigin = sf::Vector2f( GetWindow().getSize().x / 2.0f - gridSize.x / 2.0f * tileSize.x, GetWindow().getSize().y / 2.0f - gridSize.y / 2.0f * heightGap );
 
-	if( gridTypeIdx == Square || gridTypeIdx == Pixel )
+	if( GetInfo().gridTypeIdx == Square || GetInfo().gridTypeIdx == Pixel )
 	{
 		const auto usePoints = ( tileSize.x <= 1.0f );
 		gridVertices.reserve( gridSize.x * gridSize.y * ( usePoints ? 1 : 4 ) );
@@ -78,7 +79,7 @@ void GameState::SetupGrid()
 			}
 		}
 	}
-	else if( gridTypeIdx == Hexagon )
+	else if( GetInfo().gridTypeIdx == Hexagon )
 	{
 		gridVertices.reserve( gridSize.x * gridSize.y * 18 );
 		const auto dimensions = sf::Vector2f( tileSize.x / 2.0f, tileSize.y / 4.0f );
@@ -122,7 +123,7 @@ void GameState::Reset( const bool resetGridCcolours )
 	if( resetGridCcolours )
 		for( unsigned y = 0; y < gridSize.y; ++y )
 			for( unsigned x = 0; x < gridSize.x; ++x )
-				SetTileColour( sf::Vector2i( x, y ), Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[0].first ) );
+				SetTileColour( sf::Vector2i( x, y ), Reflex::ToColour( GetInfo().coloursAndAngles[0].first ) );
 
 	timer = 0.0f;
 }
@@ -135,7 +136,7 @@ void GameState::Update( const float deltaTime )
 
 void GameState::UpdateAnts( const float deltaTime )
 {
-	if( updateTime <= 0.0f || activeAnts == 0 )
+	if( updatesPerSec <= 0.0f || activeAnts == 0 )
 		return;
 
 	timer -= deltaTime;
@@ -143,7 +144,7 @@ void GameState::UpdateAnts( const float deltaTime )
 	while( activeAnts > 0 && ( timer <= 0.0f || ( int )generation < stepTo ) )
 	{
 		if( timer <= 0.0f )
-			timer += updateTime;
+			timer +=  1.0f / updatesPerSec;
 
 		++generation;
 		activeAnts = 0;
@@ -153,13 +154,24 @@ void GameState::UpdateAnts( const float deltaTime )
 			if( !ant.active )
 				continue;
 
-			const auto gridIndex = FindGridIndex( ant.currentPos );
+			auto gridIndex = FindGridIndex( ant.currentPos );
 
 			// Remove off screen ants
 			if( gridIndex.x <= 0 || gridIndex.y <= 0 || gridIndex.x >= ( int )gridSize.x || gridIndex.y >= ( int )gridSize.y )
 			{
-				ant.active = false;
-				continue;
+				if( GetInfo().infiniteGrid )
+				{
+					if( gridIndex.x <= 0 ) ant.currentPos.x = ( gridSize.x - 1 ) * tileSize.x;
+					if( gridIndex.y <= 0 ) ant.currentPos.y = ( gridSize.y - 1 ) * tileSize.y;
+					if( gridIndex.x >= ( int )gridSize.x ) ant.currentPos.x = tileSize.x;
+					if( gridIndex.y >= ( int )gridSize.y ) ant.currentPos.y = tileSize.y;
+					gridIndex = FindGridIndex( ant.currentPos );
+				}
+				else
+				{
+					ant.active = false;
+					continue;
+				}
 			}
 
 			++activeAnts;
@@ -167,18 +179,34 @@ void GameState::UpdateAnts( const float deltaTime )
 			// Rotate
 			const auto idx = gridIndex.y * gridSize.x + gridIndex.x;
 			assert( idx >= 0 && idx < gridStates.size() );
-			gridStates[idx] %= customStates[currentStateInfo].statesCount;
-			ant.currentDir = Reflex::Modf( ant.currentDir + customStates[currentStateInfo].coloursAndAngles[gridStates[idx]].second, PI2 );
+			gridStates[idx] %= GetInfo().statesCount;
+			ant.currentDir = Reflex::Modf( ant.currentDir + GetInfo().coloursAndAngles[gridStates[idx]].second, PI2 );
+
+			if( logToConsole )
+				LOG_INFO( "Generation: " << generation << ", Ant: " << activeAnts << ", gridIndex: " << gridIndex.x << ", " <<
+				gridIndex.y << ", Angle: " << ant.currentDir << ", Tile State: " << gridStates[idx] << ", Pos: " << ant.currentPos.x << ", " << ant.currentPos.y );
 
 			// Flip tile
-			const auto count = ( idx + 1 ) * ( tileSize.x <= 1.0f ? 1 : gridTypeIdx == Hexagon ? 18 : 4 );
+			const auto count = ( idx + 1 ) * ( tileSize.x <= 1.0f ? 1 : GetInfo().gridTypeIdx == Hexagon ? 18 : 4 );
 			assert( idx >= 0 && count - 1 < gridVertices.size() );
-			gridStates[idx] = ( gridStates[idx] + 1 ) % customStates[currentStateInfo].statesCount;
-			SetTileColour( gridIndex, Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[gridStates[idx]].first ), ( GameState::BlendValue )blendIdx );
+			gridStates[idx] = ( gridStates[idx] + 1 ) % GetInfo().statesCount;
+
+			auto newColour = Reflex::ToColour( GetInfo().coloursAndAngles[gridStates[idx]].first );
+			
+			if( ant.hue != sf::Color::White )
+				newColour = Reflex::BlendColourGammaCorrection( newColour, ant.hue );
+
+			SetTileColour( gridIndex, newColour, ( BlendValue )GetInfo().blendIdx );
 
 			// Move
 			ant.currentPos.x += std::cosf( ant.currentDir ) * tileSize.x;
-			ant.currentPos.y += std::sinf( ant.currentDir ) * tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
+			ant.currentPos.y += std::sinf( ant.currentDir ) * tileSize.y * ( GetInfo().gridTypeIdx == Hexagon ? 0.75f : 1.0f );;
+
+			if( GetInfo().lockToGrid )
+			{
+				ant.currentPos.x = Reflex::Round( ant.currentPos.x );
+				ant.currentPos.y = Reflex::Round( ant.currentPos.y );
+			}
 		}
 	}
 }
@@ -196,13 +224,13 @@ void GameState::UpdateCamera( const float deltaTime )
 
 sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 {
-	if( gridTypeIdx == Square || gridTypeIdx == Pixel )
-		return sf::Vector2i( Reflex::RoundToInt( ( pos.x - gridOrigin.x ) / tileSize.x ), Reflex::RoundToInt( ( pos.y - gridOrigin.y ) / tileSize.y ) );
+	if( GetInfo().gridTypeIdx == Square || GetInfo().gridTypeIdx == Pixel )
+		return sf::Vector2i( int( ( pos.x - gridOrigin.x ) / tileSize.x + 0.5f ), int( ( pos.y - gridOrigin.y ) / tileSize.y + 0.5f ) );
 
 	// Hexagon
 	const auto halfSizeX = tileSize.x / 2.0f;
 	const auto offset = ( sqrtf( 3.0f ) * halfSizeX ) / 2.0f;
-	const auto heightGap = tileSize.y * ( gridTypeIdx == Hexagon ? 0.75f : 1.0f );
+	const auto heightGap = tileSize.y * ( GetInfo().gridTypeIdx == Hexagon ? 0.75f : 1.0f );
 	const auto x = pos.x - gridOrigin.x;
 	const auto y = pos.y - gridOrigin.y - ( size - heightGap ) + offset;
 
@@ -233,16 +261,29 @@ sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 
 void GameState::ProcessEvent( const sf::Event& event )
 {
-	if( placingAnts && event.type == sf::Event::MouseButtonPressed )
+	if( ( angleAnt || placingAnts ) && event.type == sf::Event::MouseButtonPressed )
 	{
 		if( event.mouseButton.button == sf::Mouse::Button::Right )
 		{
-			placingAnts = false;
+			if( angleAnt )
+				angleAnt = false;
+			else
+				placingAnts = false;
 		}
 		else if( event.mouseButton.button == sf::Mouse::Button::Left )
 		{
-			const auto mousePosition = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
-			ants.emplace_back( sf::Vector2f( Reflex::RoundToInt( mousePosition.x / tileSize.x ) * tileSize.x, Reflex::RoundToInt( mousePosition.y / tileSize.y ) * tileSize.y ), PI );
+			if( angleAnt )
+			{
+				const auto mousePosition = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
+				const auto rotation = Reflex::RotationFromVector( mousePosition - antPlacerDisplay.getPosition() );
+				ants.emplace_back( LockToGrid( antPlacerDisplay.getPosition() ), rotation );
+				activeAnts++;
+				angleAnt = false;
+			}
+			else
+			{
+				angleAnt = true;
+			}
 		}
 	}
 
@@ -266,12 +307,23 @@ void GameState::ProcessEvent( const sf::Event& event )
 
 void GameState::Render()
 {
-	GetWindow().draw( gridVertices.data(), gridVertices.size(), gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
+	GetWindow().draw( gridVertices.data(), gridVertices.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	const auto mousePos = Reflex::Vector2iToVector2f( sf::Mouse::getPosition( GetWindow() ) );
 
 	if( placingAnts )
 	{
-		antPlacerDisplay.setPosition( mousePos );
+		if( !angleAnt )
+		{
+			antPlacerDisplay.setPosition( mousePos );
+		}
+		else
+		{
+			antPlacerDisplay2.setPosition( antPlacerDisplay.getPosition() );
+			antPlacerDisplay2.setSize( sf::Vector2f( std::min( 150.0f, Reflex::GetDistance( antPlacerDisplay.getPosition(), mousePos ) ), 2.0f ) );
+			antPlacerDisplay2.setRotation( TODEGREES( Reflex::RotationFromVector( mousePos - antPlacerDisplay.getPosition() ) ) );
+			GetWindow().draw( antPlacerDisplay2 );
+		}
+
 		GetWindow().draw( antPlacerDisplay );
 	}
 
@@ -306,16 +358,18 @@ void GameState::Render()
 	ImGui::Begin( "Langton's Ant", nullptr, ImGuiWindowFlags_AlwaysAutoResize );
 	ImGui::Text( ( "Generation " + std::to_string( generation ) ).c_str() );
 	ImGui::Separator();
+	ImGui::Checkbox( "Console Logging", &logToConsole );
+
 	ImGui::NewLine();
 
 	{
-		const auto prev = gridTypeIdx;
+		const auto prev = GetInfo().gridTypeIdx;
 		ImGui::Text( "Grid Type" );
-		ImGui::RadioButton( "Square", &gridTypeIdx, Square ); ImGui::SameLine();
-		ImGui::RadioButton( "Hexagon", &gridTypeIdx, Hexagon ); ImGui::SameLine();
-		ImGui::RadioButton( "Pixel", &gridTypeIdx, Pixel );
+		ImGui::RadioButton( "Square", &GetInfo().gridTypeIdx, Square ); ImGui::SameLine();
+		ImGui::RadioButton( "Hexagon", &GetInfo().gridTypeIdx, Hexagon ); ImGui::SameLine();
+		ImGui::RadioButton( "Pixel", &GetInfo().gridTypeIdx, Pixel );
 
-		if( ImGui::InputFloat( "Grid Size", &size, 1.0f, 5.0f, 1 ) || prev != gridTypeIdx )
+		if( ImGui::InputFloat( "Grid Size", &size, 1.0f, 5.0f, 1 ) || prev != GetInfo().gridTypeIdx )
 		{
 			SetupGrid();
 			Reset();
@@ -323,27 +377,27 @@ void GameState::Render()
 	}
 
 	// Manual speed adjustment with slider
-	ImGui::SliderFloat( "Update Interval", &updateTime, 0.3f, 0.0f, "%.5f", 0.15f );
+	ImGui::SliderFloat( "Updates per second", &updatesPerSec, 0, 10000, "%.0f", 2.0f );
 
-		const auto g = floorf( log10f( ( float )stepTo ) );
-		const auto baseRate = std::max( 100, ( int )powf( 10.0f, g ) );
-		ImGui::InputInt( "Set Generation", &stepTo, 
-			baseRate,										// Decrement
-			baseRate, 0,									// Decrement fast
-			baseRate,										// Increment
-			std::max( 100, ( int )powf( 10.0f, g + 1 ) ) );	// Increment fast
-		stepTo = std::max( 0, stepTo );
+	const auto g = floorf( log10f( ( float )stepTo ) );
+	const auto baseRate = std::max( 100, ( int )powf( 10.0f, g ) );
+	ImGui::InputInt( "Set Generation", &stepTo,
+		stepTo == baseRate ? baseRate / 10 : baseRate,	// Decrement
+		baseRate, 0,									// Decrement fast
+		baseRate,										// Increment
+		baseRate  * 10 );								// Increment fast
+	stepTo = std::max( 0, stepTo );
 
 	// Number of states for this sim
-	if( ImGui::SliderInt( "State Count", &customStates[currentStateInfo].statesCount, 2, 50 ) )
+	if( ImGui::SliderInt( "State Count", &GetInfo().statesCount, 2, 50 ) )
 	{
-		while( customStates[currentStateInfo].coloursAndAngles.size() < (unsigned )customStates[currentStateInfo].statesCount )
+		while( customStates[currentStateInfo].coloursAndAngles.size() < (unsigned )GetInfo().statesCount )
 		{
-			customStates[currentStateInfo].Append( Reflex::RandomColour(), Reflex::RandomBool() ? -PIDIV2 : PIDIV2 );
-			customStates[currentStateInfo].statesCount--;
+			 GetInfo().Append( Reflex::RandomColour(), Reflex::RandomBool() ? -PIDIV2 : PIDIV2 );
+			 GetInfo().statesCount--;
 		}
 
-		customStates[currentStateInfo].coloursAndAngles.resize( customStates[currentStateInfo].statesCount );
+		GetInfo().coloursAndAngles.resize( GetInfo().statesCount );
 	}
 
 	ImGui::NewLine();
@@ -353,17 +407,17 @@ void GameState::Render()
 	{
 		bool colourChange = false;
 
-		for( int i = 0; i < customStates[currentStateInfo].statesCount; ++i )
+		for( int i = 0; i < GetInfo().statesCount; ++i )
 		{
 			if( ImGui::TreeNode( ( "State " + std::to_string( i ) ).c_str() ) )
 			{
-				if( ImGui::ColorEdit4( "State Colour", customStates[currentStateInfo].coloursAndAngles[i].first._Elems ) )
+				if( ImGui::ColorEdit4( "State Colour", GetInfo().coloursAndAngles[i].first._Elems ) )
 				{
 					colourChange = true;
 					UpdateIncrementalColours( i );
 				}
 
-				ImGui::SliderAngle( "State Rotation", &customStates[currentStateInfo].coloursAndAngles[i].second );
+				ImGui::SliderAngle( "State Rotation", &GetInfo().coloursAndAngles[i].second, -180.0f, 180.0f );
 				ImGui::TreePop();
 			}
 		}
@@ -383,8 +437,13 @@ void GameState::Render()
 			{
 				currentItem = customStates[i].name.c_str();
 				currentStateInfo = i;
+				ants.clear();
+				for( auto& ant : GetInfo().ants )
+					ants.emplace_back( ant.startingPos, ant.startingDir );
+				SetupGrid();
 				Reset();
 			}
+
 			if( isSelected )
 				ImGui::SetItemDefaultFocus();
 		}
@@ -401,95 +460,136 @@ void GameState::Render()
 		btnText = placingAnts ? "Placing Ants" : "Place Ants";
 	}
 
+	ImGui::SameLine();
+	if( ImGui::Button( "Remove Ants" ) )
+		ants.clear();
+
 	ImGui::Checkbox( "Display Ants", &displayAnts );
 
 	ImGui::NewLine();
 
 	ImGui::Text( "Colour Blending" );
-	ImGui::RadioButton( "Disabled", &blendIdx, Disable ); ImGui::SameLine();
-	ImGui::RadioButton( "Gamma", &blendIdx, Gamma ); ImGui::SameLine();
-	ImGui::RadioButton( "Alpha", &blendIdx, Alpha );
+	ImGui::RadioButton( "Disabled", &GetInfo().blendIdx, Disable ); ImGui::SameLine();
+	ImGui::RadioButton( "Gamma", &GetInfo().blendIdx, Gamma ); ImGui::SameLine();
+	ImGui::RadioButton( "Alpha", &GetInfo().blendIdx, Alpha );
 
-	if( ImGui::Checkbox( "Incremental RGB", &incrementalRGB ) )
+	if( ImGui::Checkbox( "Incremental RGB", &GetInfo().incrementalRGB ) )
 		UpdateIncrementalColours();
 
 	ImGui::SameLine();
-	if( ImGui::Checkbox( "Incremental Alpha", &incrementalAlpha ) )
+	if( ImGui::Checkbox( "Incremental Alpha", &GetInfo().incrementalAlpha ) )
 		UpdateIncrementalColours();
 
-	if( ImGui::Button( "Colour Smooth" ) )
+	ImGui::Checkbox( "Infinite Grid", &GetInfo().infiniteGrid );
+	ImGui::SameLine();
+	ImGui::Checkbox( "Lock To Grid", &GetInfo().lockToGrid );
+
+	if( ImGui::Button( "Smooth Colours" ) )
 		ColourSmooth();
 
 	ImGui::NewLine();
 
-	static bool showSaveSetup = false;
+	/// Save new custom ant simulation setup (saves to JSON file)
+	static char buffer[256];
+	sprintf_s( buffer, IM_ARRAYSIZE( buffer ), GetInfo().name.c_str() );
+	if( ImGui::InputText( "Name", buffer, IM_ARRAYSIZE( buffer ) ) )
+		GetInfo().name = buffer;
 
-	// Save new custom ant simulation setup (saves to JSON file)
-	if( ImGui::Button( "Save Setup" ) )
-		showSaveSetup = !showSaveSetup;
-
-	if( showSaveSetup )
+	if( ImGui::Button( "Save New" ) )
 	{
-		ImGui::BeginChild( "Save Setup" );
-		static char buffer[256] = "New Sim";
-		ImGui::InputText( "Name", buffer, IM_ARRAYSIZE( buffer ) );
+		auto copiedCustomState = customStates[currentStateInfo];
+		copiedCustomState.name = buffer;
 
-		if( ImGui::Button( "Cancel" ) )
-			showSaveSetup = false;
+		copiedCustomState.ants.clear();
+		for( auto& ant : ants )
+			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
 
-		ImGui::SameLine();
-		if( ImGui::Button( "Save" ) )
+		ReadCustomSetups();
+		customStates.push_back( std::move( copiedCustomState ) );
+		SaveCustomSetups();
+		currentItem = customStates.back().name.c_str();
+		currentStateInfo = customStates.size() - 1;
+	}
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Save Existing" ) )
+	{
+		auto copiedCustomState = customStates[currentStateInfo];
+
+		copiedCustomState.ants.clear();
+		for( auto& ant : ants )
+			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
+
+		SaveCustomSetups();
+		currentItem = customStates[0].name.c_str();
+	}
+
+	ImGui::NewLine();
+	if( ImGui::Button( "Random Angles" ) )
+		RandomiseAngles();
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Random Angles Aligned" ) )
+		RandomiseAngles( true );
+
+	if( ImGui::Button( "Random Colours" ) )
+	{
+		for( auto& info : GetInfo().coloursAndAngles )
+			info.first = Reflex::ToImGuiColour4( Reflex::RandomColour( GetInfo().incrementalAlpha ) );
+
+		if( GetInfo().incrementalRGB )
 		{
-			auto copiedCustomState = customStates[currentStateInfo];
-			copiedCustomState.name = buffer;
-			ReadCustomSetups();
-			customStates.push_back( std::move( copiedCustomState ) );
-			SaveCustomSetups();
-			currentItem = customStates[0].name.c_str();
-			showSaveSetup = false;
+			GetInfo().coloursAndAngles[1].first = Reflex::ToImGuiColour4( Reflex::RandomColour( GetInfo().incrementalAlpha, 0, 50 ) );
+			Reflex::RandomElement( GetInfo().coloursAndAngles[1].first ) = Reflex::RandomInt( Reflex::RandomInt( 200 ) ) / 255.0f;
 		}
 
-		ImGui::EndChild();
+		GetInfo().coloursAndAngles[0].first = Reflex::ToImGuiColour4( sf::Color::Black );
+		UpdateIncrementalColours( 0 );
 	}
-	else
-	{
-		// Button for resetting generations & the simulation display
-		ImGui::SameLine();
-		if( ImGui::Button( "Restart" ) )
-			Reset();
 
-		ImGui::SameLine();
-		if( ImGui::Button( "Random Simulation" ) )
-			RandomiseParameters();
-	}
+	ImGui::SameLine();
+	if( ImGui::Button( "Random Ant Colours" ) )
+		for( auto& ant : ants )
+			ant.hue = Reflex::RandomColour( false, 150, 255 );
+
+	ImGui::NewLine();
+
+	// Button for resetting generations & the simulation display
+	if( ImGui::Button( "Restart" ) )
+		Reset();
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Random Simulation" ) )
+		RandomiseParameters();
+
 
 	ImGui::End();
 }
 
 void GameState::UpdateIncrementalColours( const unsigned startIdx )
 {
-	if( !incrementalAlpha && !incrementalRGB )
+	if( !GetInfo().incrementalAlpha && !GetInfo().incrementalRGB )
 		return;
 
-	const auto colours = customStates[currentStateInfo].coloursAndAngles;
+	const auto colours = GetInfo().coloursAndAngles;
 	sf::Vector3f baseC( colours[startIdx].first[0], colours[startIdx].first[1], colours[startIdx].first[2] );
 	sf::Vector3f newC = baseC;
 	const auto startAlpha = 0.1f;
 	float alpha = startAlpha;
 
-	for( unsigned i = startIdx; i < customStates[currentStateInfo].coloursAndAngles.size(); ++i )
+	for( unsigned i = startIdx; i < GetInfo().coloursAndAngles.size(); ++i )
 	{
-		if( incrementalRGB )
+		if( GetInfo().incrementalRGB )
 		{
-			customStates[currentStateInfo].coloursAndAngles[i].first[0] = std::min( 1.0f, newC.x );
-			customStates[currentStateInfo].coloursAndAngles[i].first[1] = std::min( 1.0f, newC.y );
-			customStates[currentStateInfo].coloursAndAngles[i].first[2] = std::min( 1.0f, newC.z );
-			newC += ( sf::Vector3f( 1.0f, 1.0f, 1.0f ) - baseC ) / ( float )customStates[currentStateInfo].statesCount;
+			 GetInfo().coloursAndAngles[i].first[0] = std::min( 1.0f, newC.x );
+			 GetInfo().coloursAndAngles[i].first[1] = std::min( 1.0f, newC.y );
+			 GetInfo().coloursAndAngles[i].first[2] = std::min( 1.0f, newC.z );
+			newC += ( sf::Vector3f( 1.0f, 1.0f, 1.0f ) - baseC ) / ( float )GetInfo().statesCount;
 		}
-		else if( incrementalAlpha )
+		else if( GetInfo().incrementalAlpha )
 		{
-			customStates[currentStateInfo].coloursAndAngles[i].first[3] = std::min( 1.0f, alpha );
-			alpha += ( 1.0f - startAlpha ) / ( float )customStates[currentStateInfo].statesCount;
+			GetInfo().coloursAndAngles[i].first[3] = std::min( 1.0f, alpha );
+			alpha += ( 1.0f - startAlpha ) / ( float )GetInfo().statesCount;
 		}
 	}
 
@@ -505,7 +605,12 @@ void GameState::Recolour()
 {
 	for( unsigned y = 0; y < gridSize.y; ++y )
 		for( unsigned x = 0; x < gridSize.x; ++x )
-			SetTileColour( sf::Vector2i( x, y ), Reflex::ToColour( customStates[currentStateInfo].coloursAndAngles[gridStates[y * gridSize.x + x] % customStates[currentStateInfo].statesCount].first ) );
+			SetTileColour( sf::Vector2i( x, y ), Reflex::ToColour( GetInfo().coloursAndAngles[gridStates[y * gridSize.x + x] % GetInfo().statesCount].first ) );
+}
+
+sf::Vector2f GameState::LockToGrid( const sf::Vector2f& v )
+{
+	return sf::Vector2f( Reflex::Round( v.x / tileSize.x ) * tileSize.x, Reflex::Round( v.y / tileSize.y ) * tileSize.y );
 }
 
 void GameState::RandomiseParameters()
@@ -513,62 +618,96 @@ void GameState::RandomiseParameters()
 	ants.clear();
 
 	const auto centre = sf::Vector2f( GetWindow().getSize().x / 2.0f, GetWindow().getSize().y / 2.0f );
-	if( Reflex::RandomBool() )
+	const auto antMode = Reflex::RandomInt( 5 );
+	if( antMode == 0 )
 	{
-		ants.emplace_back( centre, Reflex::RandomAngle() );
+		ants.emplace_back( centre, Reflex::RandomAngle() - PI );
 	}
 	else
 	{
-		const auto distMaxX = Reflex::RandomFloat( 4.0f, GetWindow().getSize().x / Reflex::RandomFloat( 1.0f, 10.0f ) ) / 2.0f;
-		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 1.0f, 10.0f ) ) / 2.0f;
+		const auto distMaxX = Reflex::RandomFloat( 4.0f, GetWindow().getSize().x / Reflex::RandomFloat( 2.0f, 10.0f ) ) / 2.0f;
+		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 2.0f, 10.0f ) ) / 2.0f;
 		const auto minX = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxX / Reflex::RandomFloat( 1.1f, 2.0f ) );
 		const auto minY = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxY / Reflex::RandomFloat( 1.1f, 2.0f ) );
-		for( int i = 0; i < 1 + ( Reflex::RandomInt( 4 ) == 0 ? 0 : Reflex::RandomInt( 30 ) ); ++i )
+		const auto count = 1 + ( antMode == 2 || antMode == 3 ? Reflex::RandomInt( 4 ) : ( Reflex::RandomInt( 4 ) == 0 ? 0 : Reflex::RandomInt( 30 ) ) );
+		const auto randomCircleDivs = Reflex::RandomInt( 1, 6 );
+
+		for( int i = 0; i < count; ++i )
 		{
 			const auto randomX = Reflex::RandomFloat( -distMaxX, distMaxX );
 			const auto randomY = Reflex::RandomFloat( -distMaxY, distMaxY );
-			ants.emplace_back( centre + sf::Vector2f( randomX + Reflex::Sign( randomX ) * minX, randomY + Reflex::Sign( randomY ) * minY ), Reflex::RandomAngle() );
+			const auto offset = sf::Vector2f( randomX + Reflex::Sign( randomX ) * minX, randomY + Reflex::Sign( randomY ) * minY );
+			const auto pos = LockToGrid( centre + offset );
+			const auto angle = Reflex::RandomAngle() - PI;
+			ants.emplace_back( pos, angle );
+
+			// Y symmetry 
+			if( antMode == 2 )
+				ants.emplace_back( LockToGrid( sf::Vector2f( GetWindow().getSize().x / 2.0f - ( pos.x - GetWindow().getSize().x / 2.0f ), pos.y ) ), angle - PI );
+			// X symmetry
+			else if( antMode == 3 )
+				ants.emplace_back( LockToGrid( sf::Vector2f( pos.x, GetWindow().getSize().y / 2.0f - ( pos.y - GetWindow().getSize().y / 2.0f ) ) ), angle - PI );
+			// Arbitrary symmetry
+			else if( antMode == 4 )
+			{
+				for( int j = 0; j < randomCircleDivs; ++j )
+				{
+					const auto rotation = ( j + 1.0f ) * PI2 / ( randomCircleDivs + 1.0f );
+					ants.emplace_back( LockToGrid( centre + Reflex::RotateVector( offset, TODEGREES( rotation ) ) ), angle + rotation );
+				}
+			}
 		}
+
+		if( Reflex::RandomBool() )
+			for( auto& ant : ants )
+				ant.hue = Reflex::RandomColour( false, 0, 255 );
 	}
 
 	const auto statesCount = 2 + ( Reflex::RandomBool() ? Reflex::RandomInt( 50 ) : Reflex::RandomInt( 500 ) );
-	customStates[currentStateInfo].statesCount = 0;
-	customStates[currentStateInfo].coloursAndAngles.clear();
-	customStates[currentStateInfo].Append( sf::Color::Black, Reflex::RandomAngle() );
+	GetInfo().statesCount = 0;
+	GetInfo().coloursAndAngles.clear();
+	GetInfo().Append( sf::Color::Black, Reflex::RandomAngle() - PI );
 
-	incrementalAlpha = statesCount > 4 && Reflex::RandomInt( 4 ) != 0;
-	incrementalRGB = statesCount > 2 && Reflex::RandomBool();
-	blendIdx = Reflex::RandomInt( NumBlendTypes );
+	GetInfo().incrementalAlpha = statesCount > 4 && Reflex::RandomInt( 5 ) != 0;
+	GetInfo().incrementalRGB = statesCount > 2 && Reflex::RandomBool();
+	GetInfo().blendIdx = Reflex::RandomInt( NumBlendTypes );
+	GetInfo().lockToGrid = Reflex::RandomInt( 4 ) == 0;
 
-	if( incrementalRGB )
-		customStates[currentStateInfo].Append( Reflex::RandomColour( incrementalAlpha, Reflex::RandomInt( 0, 50 ) ), Reflex::RandomAngle() );
+	if( GetInfo().incrementalRGB )
+	{
+		GetInfo().Append( Reflex::RandomColour( GetInfo().incrementalAlpha, 0, Reflex::RandomInt( 1, 50 ) ), Reflex::RandomAngle() - PI );
+		Reflex::RandomElement( GetInfo().coloursAndAngles[1].first ) = Reflex::RandomInt( Reflex::RandomInt( 200 ) ) / 255.0f;
+	}
 
 	const auto mode = Reflex::RandomInt( 6 );
 	const auto colourMode = Reflex::RandomInt( 2 );
-	auto previousAngle = Reflex::RandomAngle();
-	auto previousColour = Reflex::RandomColour( blendIdx == Alpha );
+	auto previousAngle = Reflex::RandomAngle() - PI;
+	auto previousColour = Reflex::RandomColour( GetInfo().blendIdx == Alpha );
 	const auto randomColourIncrement = Reflex::RandomInt( 5, 50 );
 
-	while( customStates[currentStateInfo].statesCount < statesCount )
+	while( GetInfo().statesCount < statesCount )
 	{
-		auto angle = mode == 0 ? Reflex::RandomBool() : ( mode == 1 && Reflex::RandomInt( 4 ) == 0 ) ? previousAngle : Reflex::RandomAngle();
-		auto colour = Reflex::RandomColour( blendIdx == Alpha );
+		auto angle = mode == 0 ? Reflex::RandomBool() : ( mode == 1 && Reflex::RandomInt( 5 ) == 0 ) ? previousAngle : Reflex::RandomAngle() - PI;
+		auto colour = Reflex::RandomColour( GetInfo().blendIdx == Alpha );
 		
 		if( colourMode == 0 )
 			colour = sf::Color( 
-				Reflex::Clamp( ( int )previousColour.r + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), 
-				Reflex::Clamp( ( int )previousColour.g + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ),
-				Reflex::Clamp( ( int )previousColour.b + Reflex::RandomInt( randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), previousColour.a );
+				Reflex::Clamp( ( int )previousColour.r + Reflex::RandomInt( 0, randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), 
+				Reflex::Clamp( ( int )previousColour.g + Reflex::RandomInt( 0, randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ),
+				Reflex::Clamp( ( int )previousColour.b + Reflex::RandomInt( 0, randomColourIncrement ) - randomColourIncrement / 2, 0, 255 ), previousColour.a );
 
 		if( mode == 3 )
 			angle -= Reflex::Modf( angle, PI / Reflex::RandomInt( 1, 10 ) );
 
-		customStates[currentStateInfo].Append( colour, angle );
+		GetInfo().Append( colour, angle );
 		previousAngle = angle;
 		previousColour = colour;
 	}
 
-	if( incrementalAlpha || incrementalRGB )
+	if( Reflex::RandomInt( 5 ) == 0 )
+		RandomiseAngles( true );
+
+	if( GetInfo().incrementalAlpha || GetInfo().incrementalRGB )
 	{
 		UpdateIncrementalColours();
 
@@ -579,13 +718,19 @@ void GameState::RandomiseParameters()
 			for( int i = 0; i < count; ++i )
 			{
 				const auto idx = 1 + ( statesCount / count ) * i;
-				customStates[currentStateInfo].coloursAndAngles[idx].first = Reflex::ToImGuiColour4( Reflex::RandomColour( blendIdx == Alpha, Reflex::RandomInt( 10, 50 ) ) );
+				GetInfo().coloursAndAngles[idx].first = Reflex::ToImGuiColour4( Reflex::RandomColour( GetInfo().blendIdx == Alpha, 0, Reflex::RandomInt( 10, 50 ) ) );
 				UpdateIncrementalColours( idx );
 			}
 		}
 	}
 
 	Reset();
+}
+
+void GameState::RandomiseAngles( const bool gridAligned )
+{
+	for( auto& state : GetInfo().coloursAndAngles )
+		state.second = ( !gridAligned ? Reflex::RandomAngle() : ( GetInfo().gridTypeIdx == Hexagon ? ( PI2 / 6.0f ) * Reflex::RandomInt( 6 ) : ( PI2 / 4.0f ) * Reflex::RandomInt( 3 ) ) ) - PI;
 }
 
 void GameState::SaveCustomSetups()
@@ -597,7 +742,14 @@ void GameState::SaveCustomSetups()
 	{
 		Json::Value item;
 		item["Name"] = customStates[i].name;
+		item["BlendIdx"] = customStates[i].blendIdx;
+		item["GridTypeIdx"] = customStates[i].gridTypeIdx;
+		item["IncrementalAlpha"] = customStates[i].incrementalAlpha;
+		item["IncrementalRGB"] = customStates[i].incrementalRGB;
+		item["InfiniteGrid"] = customStates[i].infiniteGrid;
+		item["LockToGrid"] = customStates[i].lockToGrid;
 		Json::Value coloursAndAngles( Json::arrayValue );
+		Json::Value ants( Json::arrayValue );
 
 		for( auto& info : customStates[i].coloursAndAngles )
 		{
@@ -613,7 +765,24 @@ void GameState::SaveCustomSetups()
 			coloursAndAngles.append( coloursAndAngle );
 		}
 
+		for( auto& info : customStates[i].ants )
+		{
+			Json::Value ant;
+			ant["Direction"] = info.startingDir;
+			ant["PositionX"] = info.startingPos.x / ( float )GetWindow().getSize().x;
+			ant["PositionY"] = info.startingPos.y / ( float )GetWindow().getSize().y;
+			Json::Value vec( Json::arrayValue );
+			vec.append( Json::Value( ( int )info.hue.r ) );
+			vec.append( Json::Value( ( int )info.hue.g ) );
+			vec.append( Json::Value( ( int )info.hue.b ) );
+			vec.append( Json::Value( ( int )info.hue.a ) );
+			ant["Hue"] = vec;
+			ants.append( ant );
+		}
+
 		item["ColoursAndAngles"] = coloursAndAngles;
+		item["Ants"] = ants;
+
 		setups.append( item );
 	}
 
@@ -656,7 +825,14 @@ void GameState::ReadCustomSetups()
 		{
 			const auto& setup = setups[i];
 			StateInfo newInfo( setup["Name"].asString() );
+			newInfo.blendIdx = setup["BlendIdx"].asInt();
+			newInfo.gridTypeIdx = setup["GridTypeIdx"].asInt();
+			newInfo.incrementalAlpha = setup["IncrementalAlpha"].asBool();
+			newInfo.incrementalRGB = setup["IncrementalRGB"].asBool();
+			newInfo.infiniteGrid = setup["InfiniteGrid"].asBool();
+			newInfo.lockToGrid = setup["LockToGrid"].asBool();
 			const auto& coloursAndAngles = setup["ColoursAndAngles"];
+			const auto& ants = setup["Ants"];
 
 			for( unsigned j = 0; j < coloursAndAngles.size(); ++j )
 			{
@@ -666,6 +842,16 @@ void GameState::ReadCustomSetups()
 				newInfo.Append( c, TORADIANS( colourAndAngle["Angle"].asInt() ) );
 			}
 
+			for( unsigned j = 0; j < ants.size(); ++j )
+			{
+				const auto direction = ants["Direction"].asFloat();
+				const auto positionX = ants["PositionX"].asFloat() * GetWindow().getSize().x;
+				const auto positionY = ants["PositionY"].asFloat() * GetWindow().getSize().y;
+				const auto& colour = ants["Hue"];
+				sf::Color c( colour[0].asInt(), colour[1].asInt(), colour[2].asInt(), colour[3].asInt() );
+				newInfo.ants.emplace_back( sf::Vector2f( positionX, positionY ), direction, c );
+			}
+
 			customStates.push_back( std::move( newInfo ) );
 		}
 	}
@@ -673,7 +859,7 @@ void GameState::ReadCustomSetups()
 
 void GameState::SetTileColour( const sf::Vector2i& index, const sf::Color& colour, const BlendValue blend )
 {
-	if( gridTypeIdx == Square || gridTypeIdx == Pixel )
+	if( GetInfo().gridTypeIdx == Square || GetInfo().gridTypeIdx == Pixel )
 	{
 		const auto numVerts = ( tileSize.x <= 1.0f ? 1U : 4U );
 		const auto idx = ( index.y * gridSize.x + index.x ) * numVerts;
@@ -686,7 +872,7 @@ void GameState::SetTileColour( const sf::Vector2i& index, const sf::Color& colou
 		for( unsigned i = 0; i < numVerts; ++i )
 			gridVertices[idx + i].color = newColour;
 	}
-	else if( gridTypeIdx == Hexagon )
+	else if( GetInfo().gridTypeIdx == Hexagon )
 	{
 		const auto idx = ( index.y * gridSize.x + index.x ) * 18;
 

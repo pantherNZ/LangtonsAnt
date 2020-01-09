@@ -66,12 +66,24 @@ namespace Reflex
 
 	inline int RandomInt( const int max )
 	{
-		return rand() % ( max + 1 );
+		return rand() % max;
 	}
 
 	inline int RandomInt( const int min, const int max )
 	{
+		if( min == max )
+			return min;
 		return min + ( RandomInt( max - min ) );
+	}
+
+	inline int RandomUnsigned( const unsigned max )
+	{
+		return rand() % max;
+	}
+
+	inline int RandomUnsigned( const unsigned min, const unsigned max )
+	{
+		return min + ( RandomUnsigned( max - min ) );
 	}
 
 	inline bool RandomBool()
@@ -252,13 +264,13 @@ namespace Reflex
 		return { colour.r / 255.0f, colour.g / 255.0f, colour.b / 255.0f, colour.a / 255.0f };
 	}
 
-	inline sf::Color RandomColour( const bool randomAlpha = false, const int maxMagnitude = 255 )
+	inline sf::Color RandomColour( const bool randomAlpha = false, const int minMagnitude = 0, const int maxMagnitude = 255 )
 	{
 		return sf::Color( 
-			RandomInt( maxMagnitude ),
-			RandomInt( maxMagnitude ),
-			RandomInt( maxMagnitude ),
-			randomAlpha ? RandomInt( maxMagnitude ) : 255 );
+			RandomInt( minMagnitude, maxMagnitude ),
+			RandomInt( minMagnitude, maxMagnitude ),
+			RandomInt( minMagnitude, maxMagnitude ),
+			randomAlpha ? RandomInt( minMagnitude, maxMagnitude ) : 255 );
 	}
 
 	inline sf::Color BlendColourLinear( const sf::Color& colourA, const sf::Color& colourB, const float percent = 0.5f )
@@ -326,10 +338,9 @@ namespace Reflex
 		return GetMagnitude( a - b );
 	}
 
-	inline sf::Vector2f Normalise( const sf::Vector2f& a )
+	inline sf::Vector2f Normalise( const sf::Vector2f& v )
 	{
-		const auto distance = GetMagnitude( a );
-		return a / distance;
+		return v / GetMagnitude( v );
 	}
 
 	inline sf::Vector2f VectorFromAngle( const float angleDegrees, const float distance )
@@ -361,6 +372,12 @@ namespace Reflex
 		return Vector2fToVector2i( RotateAroundPoint( Vector2iToVector2f( position ), Vector2iToVector2f( rotateAround ), angleDegrees ) );
 	}
 
+	inline float RotationFromVector( const sf::Vector2f& v )
+	{
+		const auto n = Normalise( v );
+		return atan2f( v.y, v.x );
+	}
+
 	inline void ScaleTo( sf::Sprite& sprite, const sf::Vector2f& targetScale )
 	{
 		sprite.setScale( sf::Vector2f( targetScale.x / ( float )sprite.getTextureRect().width, targetScale.y / ( float )sprite.getTextureRect().height ) );
@@ -382,4 +399,20 @@ namespace Reflex
 	bool IntersectPolygonSquare( const std::vector< sf::Vector2f >& polygon, const sf::Vector2f& square_position, const float half_width );
 
 	bool IntersectCircleSquare( const sf::Vector2f& circle_position, const float circle_radius, const sf::Vector2f& square_position, const float half_width );
+
+	template< class T >
+	const typename T::value_type& RandomElement( const T& container )
+	{
+		if( container.empty() )
+			throw std::runtime_error( "RandomElement called on empty container" );
+		return container[RandomUnsigned( ( unsigned )container.size() )];
+	}
+
+	template< class T >
+	typename T::value_type& RandomElement( T& container )
+	{
+		if( container.empty() )
+			throw std::runtime_error( "RandomElement called on empty container" );
+		return container[RandomUnsigned( ( unsigned )container.size() )];
+	}
 }

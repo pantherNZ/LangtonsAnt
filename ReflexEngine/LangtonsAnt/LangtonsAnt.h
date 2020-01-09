@@ -3,6 +3,22 @@
 
 using namespace Reflex::Core;
 
+enum BlendValue
+{
+	Disable,
+	Gamma,
+	Alpha,
+	NumBlendTypes,
+};
+
+enum GridType
+{
+	Square,
+	Hexagon,
+	Pixel,
+	NumGridTypes,
+};
+
 class GameState : public State
 {
 public:
@@ -24,6 +40,10 @@ protected:
 	void Recolour();
 	void RandomiseParameters();
 	sf::Vector2i FindGridIndex( const sf::Vector2f& pos );
+	void SetTileColour( const sf::Vector2i& index, const sf::Color& colour, const BlendValue blend = Disable );
+	struct StateInfo& GetInfo() { return customStates[currentStateInfo]; }
+	sf::Vector2f LockToGrid( const sf::Vector2f& v );
+	void RandomiseAngles( const bool gridAligned = false );
 
 	void SaveCustomSetups();
 	void ReadCustomSetups();
@@ -39,21 +59,9 @@ protected:
 	sf::Vector2f tileSize;
 	sf::Vector2f gridOrigin;
 	float timer = 0.5f;
-	float updateTime = 0.01f;
+	float updatesPerSec = 100;
 	unsigned generation = 0;
 	int stepTo = 0;
-
-	enum BlendValue
-	{
-		Disable,
-		Gamma,
-		Alpha,
-		NumBlendTypes,
-	};
-
-	int blendIdx = Disable;
-
-	void SetTileColour( const sf::Vector2i& index, const sf::Color& colour, const BlendValue blend = Disable );
 
 	std::vector< sf::Vertex > gridVertices;
 	std::vector< int > gridStates;
@@ -62,23 +70,13 @@ protected:
 	std::vector< struct StateInfo > customStates;
 
 	bool placingAnts = false;
+	bool angleAnt = false;
 	bool displayAnts = false;
+	bool logToConsole = false;
 	unsigned activeAnts = 0;
 	std::vector< struct Ant > ants;
 	sf::CircleShape antPlacerDisplay;
-
-	enum GridType
-	{
-		Square,
-		Hexagon,
-		Pixel,
-		NumGridTypes,
-	};
-
-	int gridTypeIdx = Square;
-
-	bool incrementalRGB = false;
-	bool incrementalAlpha = false;
+	sf::RectangleShape antPlacerDisplay2;
 };
 
 struct StateInfo
@@ -91,18 +89,30 @@ struct StateInfo
 	}
 
 	std::string name;
+
+	bool incrementalRGB = false;
+	bool incrementalAlpha = false;
+	bool infiniteGrid = false;
+	bool lockToGrid = false;
+
 	int statesCount = 0;
 	std::vector< std::pair< std::array< float, 4 >, float > > coloursAndAngles;
+
+	int blendIdx = Disable;
+	int gridTypeIdx = Square;
+
+	std::vector< struct Ant > ants;
 };
 
 struct Ant
 {
-	Ant( const sf::Vector2f& pos, const float direction = PI )
+	Ant( const sf::Vector2f& pos, const float direction = PI, const sf::Color& colour = sf::Color::White )
 		: startingPos( pos )
 		, currentPos( pos )
 		, startingDir( direction )
 		, currentDir( direction )
-		, display( 10.0f )
+		, display( 2.0f )
+		, hue( colour )
 	{ 
 		display.setFillColor( sf::Color::Transparent );
 		display.setOutlineColor( sf::Color::Red );
@@ -116,4 +126,5 @@ struct Ant
 	float currentDir = PI;
 	bool active = true;
 	sf::CircleShape display;
+	sf::Color hue;
 };

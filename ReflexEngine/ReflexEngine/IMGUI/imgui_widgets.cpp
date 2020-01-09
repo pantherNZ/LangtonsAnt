@@ -2913,7 +2913,7 @@ bool ImGui::InputScalar(const char* label, ImGuiDataType data_type, void* p_data
         SameLine(0, style.ItemInnerSpacing.x);
         if (ButtonEx("+", ImVec2(button_size, button_size), button_flags))
         {
-            DataTypeApplyOp(data_type, '+', p_data, p_data, g.IO.KeyCtrl ? p_step_plus_fast ? p_step_plus_fast : p_step_fast ? p_step_fast : p_step : p_step);
+            DataTypeApplyOp(data_type, '+', p_data, p_data, g.IO.KeyCtrl ? ( p_step_plus_fast ? p_step_plus_fast : p_step_fast ) : p_step_plus ? p_step_plus : p_step);
             value_changed = true;
         }
 
