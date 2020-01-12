@@ -421,7 +421,7 @@ void GameState::Render()
 	}
 
 	// Manual speed adjustment with slider
-	ImGui::SliderFloat( "Updates per second", &updatesPerSec, 0, 10000, "%.0f", 2.0f );
+	ImGui::SliderFloat( "Updates per second", &updatesPerSec, 0, 100000, "%.0f", 2.0f );
 
 	const auto g = floorf( log10f( ( float )stepTo ) );
 	const auto baseRate = std::max( 100, ( int )powf( 10.0f, g ) );
