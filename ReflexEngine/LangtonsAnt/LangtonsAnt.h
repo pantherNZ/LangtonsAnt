@@ -32,6 +32,7 @@ protected:
 	void ProcessEvent( const sf::Event& event ) final;
 	void Render() final;
 
+	void UpdateAntsThread();
 	void UpdateAnts( const float deltaTime );
 	void UpdateCamera( const float deltaTime );
 	void UpdateIncrementalColours( const unsigned startIdx = 1 );
@@ -77,6 +78,8 @@ protected:
 	std::vector< struct Ant > ants;
 	sf::CircleShape antPlacerDisplay;
 	sf::RectangleShape antPlacerDisplay2;
+
+	std::unique_ptr< sf::Thread > processThread;
 };
 
 struct StateInfo

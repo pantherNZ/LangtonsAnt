@@ -28,6 +28,9 @@ GameState::GameState( StateManager& stateManager, Context context )
 	ReadCustomSetups();
 	SetupGrid();
 	Reset( false );
+
+	//processThread = std::make_unique<sf::Thread>( &GameState::UpdateAntsThread, this );
+	//processThread->launch();
 }
 
 void GameState::SetupGrid()
@@ -132,6 +135,20 @@ void GameState::Update( const float deltaTime )
 {
 	UpdateAnts( deltaTime );
 	UpdateCamera( deltaTime );
+}
+
+
+void GameState::UpdateAntsThread()
+{
+	sf::Clock clock;
+	sf::Time accumlatedTime = sf::Time::Zero;
+
+	while( true )
+	{
+		sf::Time deltaTime = clock.restart();
+
+		UpdateAnts( deltaTime.asSeconds() );
+	}
 }
 
 void GameState::UpdateAnts( const float deltaTime )
@@ -308,7 +325,7 @@ void GameState::ProcessEvent( const sf::Event& event )
 void GameState::Render()
 {
 	GetWindow().draw( gridVertices.data(), gridVertices.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
-	const auto mousePos = Reflex::Vector2iToVector2f( sf::Mouse::getPosition( GetWindow() ) );
+	const auto mousePos = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
 
 	if( placingAnts )
 	{
@@ -625,11 +642,11 @@ void GameState::RandomiseParameters()
 	}
 	else
 	{
-		const auto distMaxX = Reflex::RandomFloat( 4.0f, GetWindow().getSize().x / Reflex::RandomFloat( 2.0f, 10.0f ) ) / 2.0f;
-		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 2.0f, 10.0f ) ) / 2.0f;
+		const auto distMaxX = Reflex::RandomFloat( 4.0f, GetWindow().getSize().x / Reflex::RandomFloat( 2.0f, 5.0f ) ) / 2.0f;
+		const auto distMaxY = Reflex::RandomFloat( 4.0f, GetWindow().getSize().y / Reflex::RandomFloat( 2.0f, 5.0f ) ) / 2.0f;
 		const auto minX = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxX / Reflex::RandomFloat( 1.1f, 2.0f ) );
 		const auto minY = Reflex::RandomBool() ? 0.0f : Reflex::RandomFloat( 0.0f, distMaxY / Reflex::RandomFloat( 1.1f, 2.0f ) );
-		const auto count = 1 + ( antMode == 2 || antMode == 3 ? Reflex::RandomInt( 4 ) : ( Reflex::RandomInt( 4 ) == 0 ? 0 : Reflex::RandomInt( 30 ) ) );
+		const auto count = 1 + ( antMode == 2 || antMode == 3 ? Reflex::RandomInt( 4 ) : ( Reflex::RandomInt( 4 ) == 0 ? 0 : Reflex::RandomInt( 20 ) ) );
 		const auto randomCircleDivs = Reflex::RandomInt( 1, 6 );
 
 		for( int i = 0; i < count; ++i )
@@ -659,8 +676,33 @@ void GameState::RandomiseParameters()
 		}
 
 		if( Reflex::RandomBool() )
+		{
+			std::vector< sf::Color > colours;
+			colours.resize( std::max( 2U, ( unsigned )std::sqrt( Reflex::RandomInt( ants.size() * ants.size() ) ) ) );
+
+			if( Reflex::RandomBool() )
+			{
+				for( auto& c : colours )
+					c = Reflex::RandomColour( false, 0, 255 );
+			}
+			else
+			{
+				for( unsigned i = 0; i < colours.size(); ++i )
+				{
+					if( i == 0 )
+						colours[i] = Reflex::RandomColour( false, 75, 180 );
+					else
+					{
+						colours[i].r = Reflex::Clamp( colours[i - 1].r + Reflex::RandomInt( 20 ), 0, 255 );
+						colours[i].g = Reflex::Clamp( colours[i - 1].g + Reflex::RandomInt( 20 ), 0, 255 );
+						colours[i].b = Reflex::Clamp( colours[i - 1].b + Reflex::RandomInt( 20 ), 0, 255 );
+					}
+				}
+			}
+
 			for( auto& ant : ants )
-				ant.hue = Reflex::RandomColour( false, 0, 255 );
+				ant.hue = Reflex::RandomElement( colours );
+		}
 	}
 
 	const auto statesCount = 2 + ( Reflex::RandomBool() ? Reflex::RandomInt( 50 ) : Reflex::RandomInt( 500 ) );
@@ -844,10 +886,10 @@ void GameState::ReadCustomSetups()
 
 			for( unsigned j = 0; j < ants.size(); ++j )
 			{
-				const auto direction = ants["Direction"].asFloat();
-				const auto positionX = ants["PositionX"].asFloat() * GetWindow().getSize().x;
-				const auto positionY = ants["PositionY"].asFloat() * GetWindow().getSize().y;
-				const auto& colour = ants["Hue"];
+				const auto direction = ants[j]["Direction"].asFloat();
+				const auto positionX = ants[j]["PositionX"].asFloat() * GetWindow().getSize().x;
+				const auto positionY = ants[j]["PositionY"].asFloat() * GetWindow().getSize().y;
+				const auto& colour = ants[j]["Hue"];
 				sf::Color c( colour[0].asInt(), colour[1].asInt(), colour[2].asInt(), colour[3].asInt() );
 				newInfo.ants.emplace_back( sf::Vector2f( positionX, positionY ), direction, c );
 			}
