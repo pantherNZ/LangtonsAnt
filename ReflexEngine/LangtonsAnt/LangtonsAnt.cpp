@@ -146,8 +146,20 @@ void GameState::UpdateAntsThread()
 	while( true )
 	{
 		sf::Time deltaTime = clock.restart();
+		sf::Clock processTime;
 
 		UpdateAnts( deltaTime.asSeconds() );
+
+		{
+			//sf::Mutex mutex;
+			//sf::Lock lock( mutex );
+			gridVerticesRender = gridVertices;
+		}
+
+		const float t = 1.0f / updatesPerSec;
+		const float diff = processTime.getElapsedTime().asSeconds() - t;
+		if( diff >= 0.0f )
+			sf::sleep( sf::seconds( diff ) );
 	}
 }
 
@@ -320,10 +332,25 @@ void GameState::ProcessEvent( const sf::Event& event )
 			cameraZoom *= ( 1.0f / zoomSpeed );
 		}
 	}
+
+	if( event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space )
+	{
+		if( pauseUpdatesPerSec == 0.0f )
+		{
+			pauseUpdatesPerSec = updatesPerSec;
+			updatesPerSec = 0.0f;
+		}
+		else
+		{
+			updatesPerSec = pauseUpdatesPerSec;
+			pauseUpdatesPerSec = 0.0f;
+		}
+	}
 }
 
 void GameState::Render()
 {
+	//GetWindow().draw( gridVerticesRender.data(), gridVerticesRender.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	GetWindow().draw( gridVertices.data(), gridVertices.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	const auto mousePos = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
 
@@ -714,11 +741,12 @@ void GameState::RandomiseParameters()
 	GetInfo().incrementalRGB = statesCount > 2 && Reflex::RandomBool();
 	GetInfo().blendIdx = Reflex::RandomInt( NumBlendTypes );
 	GetInfo().lockToGrid = Reflex::RandomInt( 4 ) == 0;
+	GetInfo().infiniteGrid = Reflex::RandomBool();
 
 	if( GetInfo().incrementalRGB )
 	{
 		GetInfo().Append( Reflex::RandomColour( GetInfo().incrementalAlpha, 0, Reflex::RandomInt( 1, 50 ) ), Reflex::RandomAngle() - PI );
-		Reflex::RandomElement( GetInfo().coloursAndAngles[1].first ) = Reflex::RandomInt( Reflex::RandomInt( 200 ) ) / 255.0f;
+		Reflex::RandomElement( GetInfo().coloursAndAngles[1].first ) = Reflex::RandomInt( 1 + Reflex::RandomInt( 200 ) ) / 255.0f;
 	}
 
 	const auto mode = Reflex::RandomInt( 6 );

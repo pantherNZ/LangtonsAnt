@@ -61,9 +61,11 @@ protected:
 	sf::Vector2f gridOrigin;
 	float timer = 0.5f;
 	float updatesPerSec = 100;
+	float pauseUpdatesPerSec = 0.0f;
 	unsigned generation = 0;
 	int stepTo = 0;
 
+	std::vector< sf::Vertex > gridVerticesRender;
 	std::vector< sf::Vertex > gridVertices;
 	std::vector< int > gridStates;
 
