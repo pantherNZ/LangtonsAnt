@@ -528,8 +528,8 @@ void GameState::Render()
 	ImGui::SameLine();
 	ImGui::Checkbox( "Lock To Grid", &GetInfo().lockToGrid );
 
-	if( ImGui::Button( "Smooth Colours" ) )
-		ColourSmooth();
+	//if( ImGui::Button( "Smooth Colours" ) )
+	//	ColourSmooth();
 
 	ImGui::NewLine();
 
