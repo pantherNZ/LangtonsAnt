@@ -53,6 +53,7 @@ namespace Reflex::Core
 		// ImGui
 		bool m_showMetrics = false;
 		bool m_showStyleEditor = false;
+		int m_fpsLimit = 0;
 	};
 
 	template< typename T >

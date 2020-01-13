@@ -65,8 +65,9 @@ namespace Reflex::Core
 
 				accumlatedTime += deltaTime;
 				bool updated = false;
+				unsigned count = 0;
 
-				while( accumlatedTime > m_updateInterval )
+				while( accumlatedTime > m_updateInterval && ++count < 10 )
 				{
 					accumlatedTime -= m_updateInterval;
 					ProcessEvents();
@@ -77,6 +78,10 @@ namespace Reflex::Core
 				ImGui::SFML::Update( m_window, deltaTime );
 				UpdateStatistics( deltaTime.asSeconds() );
 				Render();
+
+				const auto targetFPS = sf::seconds( 1.0f / m_fpsLimit );
+				if( m_fpsLimit > 0 && clock.getElapsedTime() < targetFPS )
+					sf::sleep( targetFPS - clock.getElapsedTime() );
 			}
 
 			Profiler::GetProfiler().OutputResults( "Performance_Results.txt" );
@@ -138,6 +143,8 @@ namespace Reflex::Core
 
 		ImGui::Checkbox( "Show ImGui Metrics", &m_showMetrics );
 		ImGui::Checkbox( "Show ImGui Style Editor", &m_showStyleEditor );
+		ImGui::InputInt( "FPS Limit", &m_fpsLimit, 1, 10 );
+		m_fpsLimit = std::max( 0, m_fpsLimit );
 
 		if( m_showMetrics )
 			ImGui::ShowMetricsWindow();
@@ -159,9 +166,11 @@ namespace Reflex::Core
 	{
 		m_statisticsUpdateTime += sf::seconds( deltaTime );
 		m_statisticsNumFrames += 1;
+		const auto interval = sf::seconds( 1.0f );
 
-		if( m_statisticsUpdateTime >= sf::seconds( 1.0f ) )
+		if( m_statisticsUpdateTime >= interval )
 		{
+			//m_statisticsNumFrames = 1.0f / deltaTime;
 			const auto ms_per_frame = m_statisticsUpdateTime.asMilliseconds() / ( float )m_statisticsNumFrames;
 			std::stringstream ss;
 			ss << "FPS: " << std::to_string( m_statisticsNumFrames ) << "\nFrame Time: ";
@@ -174,7 +183,7 @@ namespace Reflex::Core
 			ss << "\nDuration: " << ( int )m_totalTime.getElapsedTime().asSeconds() << "s";
 
 			m_statisticsText = ss.str();
-			m_statisticsUpdateTime -= sf::seconds( 1.0f );
+			m_statisticsUpdateTime -= interval;
 			m_statisticsNumFrames = 0;
 		}
 	}

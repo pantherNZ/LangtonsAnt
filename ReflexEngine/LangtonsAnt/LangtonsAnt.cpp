@@ -524,7 +524,7 @@ void GameState::Render()
 	if( ImGui::Checkbox( "Incremental Alpha", &GetInfo().incrementalAlpha ) )
 		UpdateIncrementalColours();
 
-	ImGui::Checkbox( "Infinite Grid", &GetInfo().infiniteGrid );
+	ImGui::Checkbox( "Wrap Grid", &GetInfo().infiniteGrid );
 	ImGui::SameLine();
 	ImGui::Checkbox( "Lock To Grid", &GetInfo().lockToGrid );
 
