@@ -12,7 +12,7 @@ Square mode, hexagon mode & pixel mode (each pixel is a single grid element)
 Many, many options for adjusting visualisation (blending, interpolation, colour control, grid lock etc.)
 Full random generation button
 
-Engine:
+Engine:  
 [SFML](https://github.com/SFML/SFML)  
 [Dear ImGui](https://github.com/ocornut/imgui)  
 [JsonCpp](https://github.com/open-source-parsers/jsoncpp)  
