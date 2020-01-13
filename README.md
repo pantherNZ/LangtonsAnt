@@ -13,29 +13,27 @@ Many, many options for adjusting visualisation (blending, interpolation, colour 
 Full random generation button
 
 Engine:
-[SFML](https://github.com/SFML/SFML)
-[Dear ImGui](https://github.com/ocornut/imgui)
-[JsonCpp](https://github.com/open-source-parsers/jsoncpp)
+[SFML](https://github.com/SFML/SFML)  
+[Dear ImGui](https://github.com/ocornut/imgui)  
+[JsonCpp](https://github.com/open-source-parsers/jsoncpp)  
 2D with Entity Component System
 
 ## Source
 Source for the actual simulation itself [here](https://github.com/pantherNZ/LangtonsAnt/blob/master/ReflexEngine/LangtonsAnt/LangtonsAnt.cpp).
 
 ## Gallery
-<details>
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant1.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant2.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant3.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant4.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant5.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant6.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant7.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant8.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant9.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant10.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant11.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant12.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant13.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant14.png)
-![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant15.png)
-</details>
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant1.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant2.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant3.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant4.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant5.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant6.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant7.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant8.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant9.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant10.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant11.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant12.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant13.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant14.png)  
+![Ant](https://github.com/pantherNZ/LangtonsAnt/blob/master/Gallery/ant15.png)  
