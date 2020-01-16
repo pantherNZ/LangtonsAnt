@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <typeindex>
 #include <array>
@@ -13,6 +13,7 @@ namespace Reflex
 	#define PI2					6.283185307f
 	#define PIDIV2				1.570796327f
 	#define PIDIV4				0.785398163f
+	#define SQRT2				1.41421356237f
 	#define TORADIANS( deg )	( deg ) * PI / 180.0f
 	#define TODEGREES( rad )	( rad ) / PI * 180.0f
 

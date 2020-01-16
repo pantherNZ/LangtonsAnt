@@ -43,10 +43,11 @@ namespace Reflex::Core
 		void ForEachObject( Func function );
 
 		sf::RenderWindow& GetWindow() { return m_context.window; }
+		const sf::RenderWindow& GetWindow() const { return m_context.window; }
 		TextureManager& GetTextureManager() { return m_context.textureManager; }
 		FontManager& GetFontManager() { return m_context.fontManager; }
 
-		const sf::FloatRect GetBounds() const;
+		sf::FloatRect GetBounds() const;
 		ObjectHandle GetSceneObject( const unsigned index = 0U ) const;
 		Reflex::Components::TransformHandle GetSceneRoot() const;
 
@@ -54,6 +55,9 @@ namespace Reflex::Core
 
 		bool IsActiveCamera( const Reflex::Components::CameraHandleConst& camera ) const;
 		void SetActiveCamera( const Reflex::Components::CameraHandle& camera );
+		Reflex::Components::CameraHandle GetActiveCamera() const { return activeCamera; }
+
+		sf::Vector2f GetMousePosition( const Reflex::Components::CameraHandle& camera = Reflex::Components::CameraHandle() ) const;
 
 	protected:
 		void Setup();

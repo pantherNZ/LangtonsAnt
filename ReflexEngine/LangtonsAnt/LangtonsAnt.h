@@ -34,7 +34,6 @@ protected:
 
 	void UpdateAntsThread();
 	void UpdateAnts( const float deltaTime );
-	void UpdateCamera( const float deltaTime );
 	void UpdateIncrementalColours( const unsigned startIdx = 1 );
 	void ColourSmooth();
 

@@ -7,19 +7,11 @@
 
 namespace Reflex::Components
 {
-	typedef Handle< class Interactable > InteractableHandle;
-	typedef Handle< const class Interactable > InteractableHandleConst;
-
 	// Class definition
-	class Interactable : public Component
-	{
-	public:
+	DefineComponent( Interactable )
 		friend class Reflex::Systems::InteractableSystem;
 
 		Interactable( const SFMLObjectHandle& collisionObject = SFMLObjectHandle() );
-
-		InteractableHandle GetHandle() { return InteractableHandle( shared_from_this() ); }
-		InteractableHandleConst GetHandle() const { return InteractableHandleConst( shared_from_this() ); }
 
 		// Settings, change as you want
 		bool selectionIsToggle = true;

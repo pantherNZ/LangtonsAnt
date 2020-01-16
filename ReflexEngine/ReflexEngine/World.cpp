@@ -7,6 +7,7 @@
 #include "RenderSystem.h"
 #include "InteractableSystem.h"
 #include "MovementSystem.h"
+#include "CameraSystem.h"
 
 namespace Reflex::Core
 {
@@ -30,6 +31,7 @@ namespace Reflex::Core
 		AddSystem< Reflex::Systems::RenderSystem >();
 		AddSystem< Reflex::Systems::InteractableSystem >();
 		AddSystem< Reflex::Systems::MovementSystem >();
+		AddSystem< Reflex::Systems::CameraSystem >();
 
 		m_sceneGraphRoot = CreateObject( false )->GetTransform();
 	}
@@ -37,8 +39,8 @@ namespace Reflex::Core
 	void World::Update( const float deltaTime )
 	{
 		// Update systems
-		for( auto& object : m_objects )
-			object->Update( deltaTime );
+		for( auto& system : m_systems )
+			system.second->Update( deltaTime );
 
 		// Deleting objects
 		for( auto& obj : m_markedForDeletion )
@@ -57,16 +59,16 @@ namespace Reflex::Core
 
 	void World::ProcessEvent( const sf::Event& event )
 	{
-		for( auto& object : m_objects )
-			object->ProcessEvent( event );
+		for( auto& system : m_systems )
+			system.second->ProcessEvent( event );
 	}
 
 	void World::Render()
 	{
 		GetWindow().setView( activeCamera ? *activeCamera : m_worldView );
 
-		for( auto& object : m_objects )
-			GetWindow().draw( *object );
+		for( auto& system : m_systems )
+			GetWindow().draw( *system.second );
 	}
 
 	ObjectHandle World::CreateObject( const sf::Vector2f& position, const float rotation, const sf::Vector2f& scale )
@@ -99,7 +101,7 @@ namespace Reflex::Core
 		m_objects.clear();
 	}
 
-	const sf::FloatRect World::GetBounds() const
+	sf::FloatRect World::GetBounds() const
 	{
 		return m_worldBounds;
 	}
@@ -169,5 +171,12 @@ namespace Reflex::Core
 
 		activeCamera = camera;
 		GetWindow().setView( *activeCamera );
+	}
+
+	sf::Vector2f World::GetMousePosition( const Reflex::Components::CameraHandle& camera ) const
+	{
+		if( camera )
+			return GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ), *camera );
+		return GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
 	}
 }

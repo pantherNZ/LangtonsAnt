@@ -6,18 +6,10 @@
 
 namespace Reflex::Components
 {
-	typedef Handle< class Grid > GridHandle;
-	typedef Handle< const class Grid > GridHandleConst;
-
 	// Class definition
-	class Grid : public Component
-	{
-	public:
+	DefineComponent( Grid )
 		Grid( const unsigned width, const unsigned height, const float cellWidth, const float cellHeight );
 		Grid( const sf::Vector2u gridSize, const sf::Vector2f cellSize );
-
-		GridHandle GetHandle() { return GridHandle( shared_from_this() ); }
-		GridHandleConst GetHandle() const { return GridHandleConst( shared_from_this() ); }
 
 		void AddToGrid( const Reflex::ObjectHandle& handle, const unsigned x, const unsigned y );
 		void AddToGrid( const Reflex::ObjectHandle& handle, const sf::Vector2u index );

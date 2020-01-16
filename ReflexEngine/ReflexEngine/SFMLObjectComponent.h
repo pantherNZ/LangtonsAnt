@@ -4,9 +4,6 @@
 
 namespace Reflex::Components
 {
-	typedef Handle< class SFMLObject > SFMLObjectHandle;
-	typedef Handle< const class SFMLObject > SFMLObjectHandleConst;
-
 	enum class SFMLObjectType : char
 	{
 		Invalid,
@@ -18,9 +15,7 @@ namespace Reflex::Components
 	};
 
 	// Class definition
-	class SFMLObject : public Component
-	{
-	public:
+	DefineComponent( SFMLObject )
 		SFMLObject( const sf::CircleShape& shape, const sf::Color& colour = sf::Color::White );
 		SFMLObject( const sf::ConvexShape& shape, const sf::Color& colour = sf::Color::White );
 		SFMLObject( const sf::RectangleShape& shape, const sf::Color& colour = sf::Color::White );
@@ -28,9 +23,6 @@ namespace Reflex::Components
 		SFMLObject( const sf::Text& text, const sf::Color& colour = sf::Color::White );
 		SFMLObject( const SFMLObject& other );
 		~SFMLObject() { }
-
-		SFMLObjectHandle GetHandle() { return SFMLObjectHandle( shared_from_this() ); }
-		SFMLObjectHandleConst GetHandle() const { return SFMLObjectHandleConst( shared_from_this() ); }
 
 		// Get functions
 		sf::CircleShape& GetCircleShape();

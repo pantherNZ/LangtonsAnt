@@ -129,6 +129,9 @@
     <ClInclude Include="CameraComponent.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="CameraSystem.h">
+      <Filter>Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TransformComponent.cpp">
@@ -199,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="CameraComponent.cpp">
       <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraSystem.cpp">
+      <Filter>Systems</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

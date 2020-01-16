@@ -20,11 +20,10 @@ namespace Reflex::Components
 		ComponentHandle GetHandle() { return ComponentHandle( shared_from_this() ); }
 		ComponentHandleConst GetHandle() const { return ComponentHandleConst( shared_from_this() ); }
 		virtual void SetOwningObject( const ObjectHandle& owner ) { m_object = owner; }
+		virtual void OnConstructionComplete() {}
 
 	protected:
-		virtual void OnConstructionComplete() {}
 		virtual void OnRemoved() {}
-		virtual void Render( sf::RenderTarget& target, sf::RenderStates states ) {}
 
 		Component() { }
 		virtual ~Component() { }
@@ -32,4 +31,24 @@ namespace Reflex::Components
 	protected:
 		ObjectHandle m_object;
 	};
+
+#define DefineComponent( X ) \
+	typedef Handle< class X > X##Handle; \
+	typedef Handle< const class X > X##HandleConst; \
+	\
+	class X : public Component \
+	{ \
+	public: \
+		X##Handle GetHandle() { return X##Handle( shared_from_this() ); } \
+		X##HandleConst GetHandle() const { return X##HandleConst( shared_from_this() ); }
+
+#define DefineComponentWithInheritence( X, Y ) \
+	typedef Handle< class X > X##Handle; \
+	typedef Handle< const class X > X##HandleConst; \
+	\
+	class X : public Component, public Y \
+	{ \
+	public: \
+		X##Handle GetHandle() { return X##Handle( shared_from_this() ); } \
+		X##HandleConst GetHandle() const { return X##HandleConst( shared_from_this() ); } 
 }

@@ -7,20 +7,13 @@
 namespace Reflex::Components
 {
 	class Grid;
-	typedef Handle< class Transform > TransformHandle;
-	typedef Handle< const class Transform > TransformHandleConst;
 
-	class Transform : public Component, public Reflex::Core::SceneNode
-	{
-	public:
+	DefineComponentWithInheritence( Transform, Reflex::Core::SceneNode )
 		friend class Reflex::Systems::MovementSystem;
 		friend class Grid;
 
 		Transform( const sf::Vector2f& position = sf::Vector2f(), const float rotation = 0.0f, const sf::Vector2f & scale = sf::Vector2f( 1.0f, 1.0f ) );
 		Transform( const Transform& other );
-
-		TransformHandle GetHandle() { return TransformHandle( shared_from_this() ); }
-		TransformHandleConst GetHandle() const { return TransformHandleConst( shared_from_this() ); }
 
 		void OnConstructionComplete() final;
 

@@ -61,12 +61,5 @@ namespace Reflex
 		{
 			return m_world;
 		}
-
-		void Object::draw( sf::RenderTarget& target, sf::RenderStates states ) const
-		{
-			for( auto& component : m_components )
-				for( auto& c : component.second )
-					c->Render( target, states );
-		}
 	}
 }

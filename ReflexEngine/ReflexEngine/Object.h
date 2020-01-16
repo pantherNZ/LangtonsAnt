@@ -14,7 +14,7 @@ namespace Reflex
 
 namespace Reflex::Core
 {
-	class Object : public SceneNode, private sf::NonCopyable, public sf::Drawable, public std::enable_shared_from_this< Object >
+	class Object : public SceneNode, private sf::NonCopyable, public std::enable_shared_from_this< Object >
 	{
 	public:
 		friend class World;
@@ -68,9 +68,6 @@ namespace Reflex::Core
 		World& GetWorld() const;
 
 	protected:
-		void Update( const float deltaTime ) {}
-		virtual void ProcessEvent( const sf::Event& event ) {}
-
 		template< typename T, typename... Args >
 		void CopyComponentsFromInternal( const ObjectHandle& other );
 
@@ -80,7 +77,6 @@ namespace Reflex::Core
 
 	private:
 		Object() = delete;
-		void draw( sf::RenderTarget& target, sf::RenderStates states ) const final;
 
 	protected:
 		World& m_world;

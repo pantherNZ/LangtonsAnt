@@ -27,9 +27,12 @@ namespace Reflex::Core
 		void RequestRemoveAllStates();
 
 		sf::RenderWindow& GetWindow() { return m_context.window; }
+		const sf::RenderWindow& GetWindow() const { return m_context.window; }
 		World& GetWorld() { return m_world; }
+		const World& GetWorld() const { return m_world; }
 		TextureManager& GetTextureManager() { return m_context.textureManager; }
 		FontManager& GetFontManager() { return m_context.fontManager; }
+		sf::Vector2f GetMousePosition( const Reflex::Components::CameraHandle& camera = Reflex::Components::CameraHandle() ) const { return m_world.GetMousePosition( camera ); }
 
 	private:
 		State();

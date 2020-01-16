@@ -16,8 +16,10 @@ GameState::GameState( StateManager& stateManager, Context context )
 	: State( stateManager, context )
 	, antPlacerDisplay( 10.0f )
 {
-	camera = GetWorld().CreateObject()->AddComponent< Reflex::Components::Camera >( Reflex::Vector2uToVector2f( context.window.getSize() ) / 2.0f, Reflex::Vector2uToVector2f( context.window.getSize() ) );
-	camera->SetActiveCamera();
+	camera = GetWorld().CreateObject()->AddComponent< Reflex::Components::Camera >( Reflex::Vector2uToVector2f( context.window.getSize() ) / 2.0f, Reflex::Vector2uToVector2f( context.window.getSize() ), true );
+	camera->EnableWASDPanning( sf::Vector2f( 300.0f, 300.0f ) );
+	camera->EnableArrowKeyPanning();
+	camera->EnableMouseZooming( 1.2f, true );
 
 	antPlacerDisplay.setFillColor( sf::Color(255, 0, 0, 128 ) );
 	antPlacerDisplay2.setFillColor( sf::Color(255, 0, 0, 128 ) );
@@ -134,9 +136,7 @@ void GameState::Reset( const bool resetGridCcolours )
 void GameState::Update( const float deltaTime )
 {
 	UpdateAnts( deltaTime );
-	UpdateCamera( deltaTime );
 }
-
 
 void GameState::UpdateAntsThread()
 {
@@ -240,17 +240,6 @@ void GameState::UpdateAnts( const float deltaTime )
 	}
 }
 
-void GameState::UpdateCamera( const float deltaTime )
-{
-	const auto verticalA = Reflex::Sign( (int )sf::Keyboard::isKeyPressed( sf::Keyboard::Down ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Up ) );
-	const auto verticalB = Reflex::Sign( (int )sf::Keyboard::isKeyPressed( sf::Keyboard::S ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::W ) );
-	const auto horizontalA = Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Right ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::Left ) );
-	const auto horizontalB = Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::D ) ) - Reflex::Sign( ( int )sf::Keyboard::isKeyPressed( sf::Keyboard::A ) );
-
-	if( verticalA || verticalB || horizontalA || horizontalB )
-		camera->move( deltaTime * sf::Vector2f( ( float )horizontalA + ( float )horizontalB, ( float )verticalA + ( float )verticalB ) * cameraSpeed );
-}
-
 sf::Vector2i GameState::FindGridIndex( const sf::Vector2f& pos )
 {
 	if( GetInfo().gridTypeIdx == Square || GetInfo().gridTypeIdx == Pixel )
@@ -303,7 +292,7 @@ void GameState::ProcessEvent( const sf::Event& event )
 		{
 			if( angleAnt )
 			{
-				const auto mousePosition = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
+				const auto mousePosition = GetMousePosition();
 				const auto rotation = Reflex::RotationFromVector( mousePosition - antPlacerDisplay.getPosition() );
 				ants.emplace_back( LockToGrid( antPlacerDisplay.getPosition() ), rotation );
 				activeAnts++;
@@ -313,23 +302,6 @@ void GameState::ProcessEvent( const sf::Event& event )
 			{
 				angleAnt = true;
 			}
-		}
-	}
-
-	if( event.type == sf::Event::MouseWheelScrolled )
-	{
-		static float cameraZoom = 1.0f;
-		cameraZoom += event.mouseWheelScroll.delta * zoomSpeed;
-
-		if( event.mouseWheelScroll.delta < 0 )
-		{
-			camera->zoom( zoomSpeed );
-			cameraZoom *= zoomSpeed;
-		}
-		else
-		{
-			camera->zoom( 1.0f / zoomSpeed );
-			cameraZoom *= ( 1.0f / zoomSpeed );
 		}
 	}
 
@@ -352,7 +324,7 @@ void GameState::Render()
 {
 	//GetWindow().draw( gridVerticesRender.data(), gridVerticesRender.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
 	GetWindow().draw( gridVertices.data(), gridVertices.size(), GetInfo().gridTypeIdx == Square ? sf::Quads : ( tileSize.x <= 1.0f ? sf::Points : sf::Triangles ) );
-	const auto mousePos = GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
+	const auto mousePos = GetMousePosition();
 
 	if( placingAnts )
 	{
