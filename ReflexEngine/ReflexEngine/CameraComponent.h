@@ -2,6 +2,7 @@
 
 #include "Component.h"
 #include "CameraSystem.h"
+#include "Object.h"
 
 namespace Reflex::Components
 {
@@ -17,8 +18,8 @@ namespace Reflex::Components
 		bool IsActiveCamera() const;
 		void SetActiveCamera();
 
-		void ApplyShake( const float force );
-		void FollowObject( const ObjectHandle object, const float interpolationSpeed );
+		//void ApplyShake( const float force );
+		void FollowObject( const Reflex::ObjectHandleConst object, const float interpolationSpeed = 0.0f );
 		bool IsFollowingObject() const { return followTarget.IsValid(); }
 
 		void EnableMousePanning( const sf::Vector2f& margin, const sf::Vector2f& speed = sf::Vector2f( 0.0f, 0.0f ) );
@@ -59,7 +60,7 @@ namespace Reflex::Components
 		float zoomScaleFactor = 1.0f;
 		sf::Vector2f panSpeed;
 		sf::Vector2f panMouseMargin;
-		float interpolationSpeed = 0.0f;
-		ObjectHandle followTarget;
+		float followInterpSpeed = 0.0f;
+		ObjectHandleConst followTarget;
 	};
 }

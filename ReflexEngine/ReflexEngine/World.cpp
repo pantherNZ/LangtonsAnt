@@ -8,6 +8,7 @@
 #include "InteractableSystem.h"
 #include "MovementSystem.h"
 #include "CameraSystem.h"
+#include "CameraComponent.h"
 
 namespace Reflex::Core
 {
@@ -173,7 +174,7 @@ namespace Reflex::Core
 		GetWindow().setView( *activeCamera );
 	}
 
-	sf::Vector2f World::GetMousePosition( const Reflex::Components::CameraHandle& camera ) const
+	sf::Vector2f World::GetMousePosition( const Reflex::Components::CameraHandleConst& camera ) const
 	{
 		if( camera )
 			return GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ), *camera );

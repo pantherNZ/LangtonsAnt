@@ -14,7 +14,7 @@ namespace Reflex
 
 namespace Reflex::Core
 {
-	class Object : public SceneNode, private sf::NonCopyable, public std::enable_shared_from_this< Object >
+	class Object : private sf::NonCopyable, public std::enable_shared_from_this< Object >
 	{
 	public:
 		friend class World;

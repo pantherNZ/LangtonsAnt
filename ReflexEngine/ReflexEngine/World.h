@@ -5,7 +5,13 @@
 #include "Context.h"
 #include "System.h"
 #include "TransformComponent.h"
-#include "CameraComponent.h"
+
+namespace Reflex::Components 
+{
+	class Camera;
+	typedef Reflex::Handle< class Reflex::Components::Camera > CameraHandle;
+	typedef Reflex::Handle< const class Reflex::Components::Camera > CameraHandleConst;
+}
 
 // Engine class
 namespace Reflex::Core
@@ -57,7 +63,7 @@ namespace Reflex::Core
 		void SetActiveCamera( const Reflex::Components::CameraHandle& camera );
 		Reflex::Components::CameraHandle GetActiveCamera() const { return activeCamera; }
 
-		sf::Vector2f GetMousePosition( const Reflex::Components::CameraHandle& camera = Reflex::Components::CameraHandle() ) const;
+		sf::Vector2f GetMousePosition( const Reflex::Components::CameraHandleConst& camera = Reflex::Components::CameraHandleConst() ) const;
 
 	protected:
 		void Setup();

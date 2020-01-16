@@ -1,7 +1,6 @@
 #include "Precompiled.h"
 #include "CameraComponent.h"
 #include "World.h"
-#include "Object.h"
 
 namespace Reflex::Components
 {
@@ -26,6 +25,12 @@ namespace Reflex::Components
 	{
 		if( flags.test( StartActivated ) || !GetObject()->GetWorld().GetActiveCamera().IsValid() )
 			SetActiveCamera();
+	}
+
+	void Camera::FollowObject( const ObjectHandleConst object, const float interpolationSpeed )
+	{
+		followTarget = object;
+		followInterpSpeed = interpolationSpeed;
 	}
 
 	bool Camera::IsActiveCamera() const

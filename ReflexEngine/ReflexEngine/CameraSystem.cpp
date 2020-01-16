@@ -1,6 +1,7 @@
 #include "Precompiled.h"
 #include "CameraSystem.h"
 #include "CameraComponent.h"
+#include "Object.h"
 #include "World.h"
 
 namespace Reflex::Systems
@@ -16,47 +17,61 @@ namespace Reflex::Systems
 	{
 		if( auto camera = GetWorld().GetActiveCamera() )
 		{
-			float vertical = 0.0f;
-			float horizontal = 0.0f;
+			auto transform = camera->GetObject()->GetTransform();
 
-			if( camera->flags[Camera::Flags::WASDPanning] )
+			if( camera->followTarget )
 			{
-				horizontal += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::D ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::A ) ) * camera->panSpeed.x;
-				vertical += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::S ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::W ) ) * camera->panSpeed.y;
+				if( camera->followInterpSpeed == 0.0f )
+					transform->setPosition( camera->followTarget->GetTransform()->getPosition() );
+				else
+					transform->move( ( camera->followTarget->GetTransform()->getPosition() - transform->getPosition() ) * deltaTime * camera->followInterpSpeed );
 			}
-
-			if( camera->flags[Camera::Flags::ArrowPanning] )
+			else
 			{
-				horizontal += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Right ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Left ) ) * camera->panSpeed.x;
-				vertical += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Down ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Up ) ) * camera->panSpeed.y;
-			}
+				float vertical = 0.0f;
+				float horizontal = 0.0f;
 
-			if( camera->flags[Camera::Flags::MousePanning] )
-			{
-				const auto mousePosPixel = sf::Mouse::getPosition( GetWorld().GetWindow() );
-				horizontal += ( (float )( mousePosPixel.x >= GetWorld().GetWindow().getSize().x - camera->panMouseMargin.x ) - (float )( mousePosPixel.x <= camera->panMouseMargin.x ) ) * camera->panSpeed.x;
-				vertical += ( (float )( mousePosPixel.y >= GetWorld().GetWindow().getSize().y - camera->panMouseMargin.y ) - (float )( mousePosPixel.y <= camera->panMouseMargin.y ) ) * camera->panSpeed.y;
-			}
-
-			if( vertical || horizontal )
-			{
-				if( !camera->flags[Camera::Flags::AdditivePanning] )
+				if( camera->flags[Camera::Flags::WASDPanning] )
 				{
-					horizontal = std::min( horizontal, camera->panSpeed.x );
-					vertical = std::min( vertical, camera->panSpeed.y );
+					horizontal += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::D ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::A ) ) * camera->panSpeed.x;
+					vertical += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::S ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::W ) ) * camera->panSpeed.y;
 				}
 
-				if( camera->flags[Camera::Flags::NormaliseDiagonalPanning] )
+				if( camera->flags[Camera::Flags::ArrowPanning] )
 				{
-					if( horizontal && vertical )
+					horizontal += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Right ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Left ) ) * camera->panSpeed.x;
+					vertical += ( (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Down ) - (float )sf::Keyboard::isKeyPressed( sf::Keyboard::Up ) ) * camera->panSpeed.y;
+				}
+
+				if( camera->flags[Camera::Flags::MousePanning] )
+				{
+					const auto mousePosPixel = sf::Mouse::getPosition( GetWorld().GetWindow() );
+					horizontal += ( (float )( mousePosPixel.x >= GetWorld().GetWindow().getSize().x - camera->panMouseMargin.x ) - (float )( mousePosPixel.x <= camera->panMouseMargin.x ) ) * camera->panSpeed.x;
+					vertical += ( (float )( mousePosPixel.y >= GetWorld().GetWindow().getSize().y - camera->panMouseMargin.y ) - (float )( mousePosPixel.y <= camera->panMouseMargin.y ) ) * camera->panSpeed.y;
+				}
+
+				if( vertical || horizontal )
+				{
+					if( !camera->flags[Camera::Flags::AdditivePanning] )
 					{
-						horizontal /= SQRT2;
-						vertical /= SQRT2;
+						horizontal = std::min( horizontal, camera->panSpeed.x );
+						vertical = std::min( vertical, camera->panSpeed.y );
 					}
-				}
 
-				camera->move( sf::Vector2f( horizontal, vertical ) * deltaTime );
+					if( camera->flags[Camera::Flags::NormaliseDiagonalPanning] )
+					{
+						if( horizontal && vertical )
+						{
+							horizontal /= SQRT2;
+							vertical /= SQRT2;
+						}
+					}
+
+					transform->move( sf::Vector2f( horizontal, vertical ) * deltaTime );
+				}
 			}
+
+			camera->setCenter( camera->GetObject()->GetTransform()->getPosition() );
 		}
 	}
 
@@ -72,7 +87,7 @@ namespace Reflex::Systems
 				if( camera->flags[Camera::Flags::ZoomCentreOnMouse] )
 				{
 					const auto afterMousePos = GetWorld().GetMousePosition( camera );
-					camera->move( prevMousePos - afterMousePos );
+					camera->GetObject()->GetTransform()->move( prevMousePos - afterMousePos );
 				}
 			}
 		}
