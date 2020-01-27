@@ -42,10 +42,14 @@ protected:
 	sf::Vector2i FindGridIndex( const sf::Vector2f& pos );
 	void SetTileColour( const sf::Vector2i& index, const sf::Color& colour, const BlendValue blend = Disable );
 	struct StateInfo& GetInfo() { return customStates[currentStateInfo]; }
+	const struct StateInfo& GetInfo() const { return customStates[currentStateInfo]; }
 	sf::Vector2f LockToGrid( const sf::Vector2f& v );
 	void RandomiseAngles( const bool gridAligned = false );
 
-	void SaveCustomSetups();
+	std::string GenerateSharingKey() const;
+	void LoadFromSharingKey( const std::string& key );
+
+	void SaveCustomSetups() const;
 	void ReadCustomSetups();
 
 protected:

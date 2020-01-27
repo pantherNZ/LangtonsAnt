@@ -3066,6 +3066,25 @@ bool ImGui::InputDouble(const char* label, double* v, double step, double step_f
 // - InputTextMultiline()
 // - InputTextEx() [Internal]
 //-------------------------------------------------------------------------
+static int InputTextCallback( ImGuiInputTextCallbackData* data )
+{
+	if( data->EventFlag == ImGuiInputTextFlags_CallbackResize )
+	{
+		// Resize string callback
+		std::string* str = ( std::string* )data->UserData;
+		IM_ASSERT( data->Buf == str->c_str() );
+		str->resize( data->BufTextLen );
+		data->Buf = (char* )str->c_str();
+	}
+
+	return 0;
+}
+
+bool ImGui::InputText( const char* label, std::string* str, ImGuiInputTextFlags flags )
+{
+	flags |= ImGuiInputTextFlags_CallbackResize;
+	return InputText( label, (char* )str->c_str(), str->capacity() + 1, flags, InputTextCallback, (void* )str );
+}
 
 bool ImGui::InputText(const char* label, char* buf, size_t buf_size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 {

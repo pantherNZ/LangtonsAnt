@@ -25,6 +25,8 @@ namespace Reflex::Components
 	{
 		if( flags.test( StartActivated ) || !GetObject()->GetWorld().GetActiveCamera().IsValid() )
 			SetActiveCamera();
+
+		GetObject()->GetTransform()->setPosition( getCenter() );
 	}
 
 	void Camera::FollowObject( const ObjectHandleConst object, const float interpolationSpeed )

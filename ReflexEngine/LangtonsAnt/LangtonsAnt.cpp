@@ -504,43 +504,6 @@ void GameState::Render()
 	//	ColourSmooth();
 
 	ImGui::NewLine();
-
-	/// Save new custom ant simulation setup (saves to JSON file)
-	static char buffer[256];
-	sprintf_s( buffer, IM_ARRAYSIZE( buffer ), GetInfo().name.c_str() );
-	if( ImGui::InputText( "Name", buffer, IM_ARRAYSIZE( buffer ) ) )
-		GetInfo().name = buffer;
-
-	if( ImGui::Button( "Save New" ) )
-	{
-		auto copiedCustomState = customStates[currentStateInfo];
-		copiedCustomState.name = buffer;
-
-		copiedCustomState.ants.clear();
-		for( auto& ant : ants )
-			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
-
-		ReadCustomSetups();
-		customStates.push_back( std::move( copiedCustomState ) );
-		SaveCustomSetups();
-		currentItem = customStates.back().name.c_str();
-		currentStateInfo = customStates.size() - 1;
-	}
-
-	ImGui::SameLine();
-	if( ImGui::Button( "Save Existing" ) )
-	{
-		auto copiedCustomState = customStates[currentStateInfo];
-
-		copiedCustomState.ants.clear();
-		for( auto& ant : ants )
-			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
-
-		SaveCustomSetups();
-		currentItem = customStates[0].name.c_str();
-	}
-
-	ImGui::NewLine();
 	if( ImGui::Button( "Random Angles" ) )
 		RandomiseAngles();
 
@@ -578,6 +541,54 @@ void GameState::Render()
 	if( ImGui::Button( "Random Simulation" ) )
 		RandomiseParameters();
 
+
+	ImGui::NewLine();
+
+	/// Save new custom ant simulation setup (saves to JSON file)
+	static char buffer[256];
+	sprintf_s( buffer, IM_ARRAYSIZE( buffer ), GetInfo().name.c_str() );
+	if( ImGui::InputText( "Name", buffer, IM_ARRAYSIZE( buffer ) ) )
+		GetInfo().name = buffer;
+
+	if( ImGui::Button( "Save New" ) )
+	{
+		auto copiedCustomState = customStates[currentStateInfo];
+		copiedCustomState.name = buffer;
+
+		copiedCustomState.ants.clear();
+		for( auto& ant : ants )
+			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
+
+		ReadCustomSetups();
+		customStates.push_back( std::move( copiedCustomState ) );
+		SaveCustomSetups();
+		currentItem = customStates.back().name.c_str();
+		currentStateInfo = customStates.size() - 1;
+	}
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Save Existing" ) )
+	{
+		auto copiedCustomState = customStates[currentStateInfo];
+
+		copiedCustomState.ants.clear();
+		for( auto& ant : ants )
+			copiedCustomState.ants.emplace_back( ant.startingPos, ant.startingDir );
+
+		SaveCustomSetups();
+		currentItem = customStates[0].name.c_str();
+	}
+
+	ImGui::NewLine();
+	static std::string key;
+
+	ImGui::InputText( "Key", &key );
+	if( ImGui::Button( "Generate Key" ) )
+		key = GenerateSharingKey();
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Load Key" ) )
+		LoadFromSharingKey( key );
 
 	ImGui::End();
 }
@@ -775,7 +786,93 @@ void GameState::RandomiseAngles( const bool gridAligned )
 		state.second = ( !gridAligned ? Reflex::RandomAngle() : ( GetInfo().gridTypeIdx == Hexagon ? ( PI2 / 6.0f ) * Reflex::RandomInt( 6 ) : ( PI2 / 4.0f ) * Reflex::RandomInt( 3 ) ) ) - PI;
 }
 
-void GameState::SaveCustomSetups()
+std::string GameState::GenerateSharingKey() const
+{
+	std::stringstream ss;
+
+	ss << GetInfo().name << " ";
+	ss << GetInfo().blendIdx << " ";
+	ss << GetInfo().gridTypeIdx << " ";
+	ss << GetInfo().incrementalAlpha << " ";
+	ss << GetInfo().incrementalRGB << " ";
+	ss << GetInfo().infiniteGrid << " ";
+	ss << GetInfo().coloursAndAngles.size() << " ";
+	ss << ants.size() << " ";
+
+	for( auto& info : GetInfo().coloursAndAngles )
+	{
+		ss << TODEGREES( info.second ) << " ";
+		const auto colour = Reflex::ToColour( info.first );
+		ss << colour.toInteger() << " ";
+	}
+
+	for( auto& info : ants )
+	{
+		ss << info.startingDir << " ";
+		ss << info.startingPos.x / ( float )GetWindow().getSize().x << " ";
+		ss << info.startingPos.y / ( float )GetWindow().getSize().y << " ";
+
+		if( info.hue == sf::Color::White )
+			ss << "W" << " ";
+		else
+			ss << info.hue.toInteger() << " ";
+	}
+
+	return ss.str();
+}
+
+void GameState::LoadFromSharingKey( const std::string& key )
+{
+	const auto split = Reflex::Split( key, ' ' );
+	std::stringstream ss( key );
+
+	ss >> GetInfo().name;
+	ss >> GetInfo().blendIdx;
+	ss >> GetInfo().gridTypeIdx;
+	ss >> GetInfo().incrementalAlpha;
+	ss >> GetInfo().incrementalRGB;
+	ss >> GetInfo().infiniteGrid;
+	int coloursCount, antsCount;
+	ss >> coloursCount >> antsCount;
+	GetInfo().ants.clear();
+	GetInfo().statesCount = 0;
+	GetInfo().coloursAndAngles.clear();
+	
+	for( int i = 0; i < coloursCount; ++i )
+	{
+		float angle;
+		ss >> angle;
+		sf::Uint32 colour;
+		ss >> colour;
+		GetInfo().Append( sf::Color( colour ), TORADIANS( angle ) );
+	}
+	
+	for( int i = 0; i < antsCount; ++i )
+	{
+		float direction, posX, posY;
+		ss >> direction >> posX >> posY;
+		std::string str;
+		ss >> str;
+		sf::Uint32 colour;
+
+		if( str == "W" )
+			colour = sf::Color::White.toInteger();
+		else
+			ss >> colour;
+
+		Ant ant( sf::Vector2f( posX * GetWindow().getSize().x, posY * GetWindow().getSize().y ), direction, sf::Color( colour ) );
+		GetInfo().ants.push_back( ant );
+	}
+
+	ants.clear();
+	for( auto& ant : GetInfo().ants )
+		ants.emplace_back( ant.startingPos, ant.startingDir );
+
+	SetupGrid();
+	Reset( false );
+}
+
+void GameState::SaveCustomSetups() const
 {
 	Json::Value jsonOut;
 	Json::Value setups( Json::arrayValue );
