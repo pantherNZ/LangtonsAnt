@@ -64,6 +64,7 @@ namespace Reflex::Core
 		Reflex::Components::CameraHandle GetActiveCamera() const { return activeCamera; }
 
 		sf::Vector2f GetMousePosition( const Reflex::Components::CameraHandleConst& camera = Reflex::Components::CameraHandleConst() ) const;
+		sf::Vector2f RandomWindowPosition( const float margin = 0.0f ) const;
 
 	protected:
 		void Setup();

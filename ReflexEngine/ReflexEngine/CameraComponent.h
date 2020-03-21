@@ -9,7 +9,7 @@ namespace Reflex::Components
 	DefineComponentWithInheritence( Camera, sf::View )
 		friend class Reflex::Systems::CameraSystem;
 
-		Camera( const sf::Vector2f& centre, const sf::Vector2f& size, const bool activate = false );
+		Camera( const sf::Vector2f& centre, const sf::Vector2f& size, const bool activate = true );
 		Camera( const sf::FloatRect& viewRect );
 		~Camera();
 

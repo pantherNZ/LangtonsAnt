@@ -47,6 +47,8 @@
     <ClInclude Include="SceneNode.h" />
     <ClInclude Include="SFMLObjectComponent.h" />
     <ClInclude Include="StateManager.h" />
+    <ClInclude Include="SteeringComponent.h" />
+    <ClInclude Include="SteeringSystem.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="TileMap.h" />
     <ClInclude Include="TransformComponent.h" />
@@ -184,6 +186,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Precompiled.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="SteeringComponent.cpp" />
+    <ClCompile Include="SteeringSystem.cpp" />
     <ClCompile Include="TileMap.cpp" />
     <ClCompile Include="TransformComponent.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>

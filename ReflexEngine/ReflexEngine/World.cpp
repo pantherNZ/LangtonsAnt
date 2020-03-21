@@ -9,6 +9,7 @@
 #include "MovementSystem.h"
 #include "CameraSystem.h"
 #include "CameraComponent.h"
+#include "SteeringSystem.h"
 
 namespace Reflex::Core
 {
@@ -33,6 +34,7 @@ namespace Reflex::Core
 		AddSystem< Reflex::Systems::InteractableSystem >();
 		AddSystem< Reflex::Systems::MovementSystem >();
 		AddSystem< Reflex::Systems::CameraSystem >();
+		AddSystem< Reflex::Systems::SteeringSystem >();
 
 		m_sceneGraphRoot = CreateObject( false )->GetTransform();
 	}
@@ -179,5 +181,12 @@ namespace Reflex::Core
 		if( camera )
 			return GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ), *camera );
 		return GetWindow().mapPixelToCoords( sf::Mouse::getPosition( GetWindow() ) );
+	}
+
+	sf::Vector2f World::RandomWindowPosition( const float margin /*= 0.0f */ ) const
+	{
+		return sf::Vector2f(
+			Reflex::RandomFloat( margin, GetWindow().getSize().x - margin * 2.0f ),
+			Reflex::RandomFloat( margin, GetWindow().getSize().y - margin * 2.0f ) );
 	}
 }

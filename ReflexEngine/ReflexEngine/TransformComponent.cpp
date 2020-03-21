@@ -8,7 +8,10 @@ namespace Reflex
 	namespace Components
 	{
 		Transform::Transform( const sf::Vector2f& position /*= sf::Vector2f()*/, const float rotation /*= 0.0f*/, const sf::Vector2f& scale /*= sf::Vector2f( 1.0f, 1.0f )*/ )
+			: Reflex::Core::SceneNode()
+			, Component()
 		{
+			
 			sf::Transformable::setPosition( position );
 			setRotation( rotation );
 			setScale( scale );
@@ -26,6 +29,7 @@ namespace Reflex
 
 		void Transform::OnConstructionComplete()
 		{
+			m_owningObject = GetObject();
 			//m_object->GetWorld().GetTileMap().Insert( m_object, sf::FloatRect( GetWorldPosition(), sf::Vector2f( 0.0f, 0.0f ) ) );
 		}
 
@@ -80,5 +84,11 @@ namespace Reflex
 			m_rotateDurationSec = 0.0f;
 			m_finishedRotationCallback = nullptr;
 		}
+
+		void Transform::SetVelocity( const sf::Vector2f velocity )
+		{
+			m_velocity = Reflex::Truncate( velocity, GetMaxVelocity() );
+		}
+
 	}
 }

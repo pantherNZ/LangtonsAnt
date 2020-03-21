@@ -112,6 +112,13 @@ namespace Reflex
 		return RandomFloat( 0.0f, PI2 );
 	}
 
+	sf::Vector2f RotateVector( const sf::Vector2f& vector, const float angleRadians );
+
+	inline sf::Vector2f RandomUnitVector()
+	{
+		return RotateVector( sf::Vector2f( 1.0f, 0.0f ), RandomAngle() );
+	}
+
 	inline float Round( float value )
 	{
 		return std::round( value );
@@ -344,6 +351,17 @@ namespace Reflex
 		return v / GetMagnitude( v );
 	}
 
+	inline sf::Vector2f Truncate( const sf::Vector2f& v, const float maxMagnitude )
+	{
+		const auto magnitude = GetMagnitude( v );
+		return magnitude > maxMagnitude ? Normalise( v ) * maxMagnitude : v;
+	}
+
+	inline sf::Vector2f ScaleTo( const sf::Vector2f& v, const float magnitude )
+	{
+		return Normalise( v ) * magnitude;
+	}
+
 	inline sf::Vector2f VectorFromAngle( const float angleDegrees, const float distance )
 	{
 		const auto angleRadians = TORADIANS( angleDegrees );
@@ -383,6 +401,8 @@ namespace Reflex
 	{
 		sprite.setScale( sf::Vector2f( targetScale.x / ( float )sprite.getTextureRect().width, targetScale.y / ( float )sprite.getTextureRect().height ) );
 	}
+
+	sf::Vector2f WrapAround( const sf::Vector2f& pos, const sf::FloatRect& bounds );
 
 	bool IntersectPolygonCircle( const std::vector< sf::Vector2f >& polygon, const sf::Vector2f& circlePosition, const float radius );
 	bool IntersectPolygonCircle( const std::vector< sf::Vector2f >& polygon, const Circle& circle );

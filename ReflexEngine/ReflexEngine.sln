@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReflexEngine", "ReflexEngin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LangtonsAnt", "LangtonsAnt\LangtonsAnt.vcxproj", "{2475847C-48FD-44F8-82F0-43D5252CAB64}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PerformanceTest", "PerformanceTest\PerformanceTest.vcxproj", "{B482A146-030C-467A-8DEB-CE4879D21537}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{2475847C-48FD-44F8-82F0-43D5252CAB64}.Release|x64.Build.0 = Release|x64
 		{2475847C-48FD-44F8-82F0-43D5252CAB64}.Release|x86.ActiveCfg = Release|Win32
 		{2475847C-48FD-44F8-82F0-43D5252CAB64}.Release|x86.Build.0 = Release|Win32
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Debug|x64.ActiveCfg = Debug|x64
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Debug|x64.Build.0 = Debug|x64
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Debug|x86.ActiveCfg = Debug|Win32
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Debug|x86.Build.0 = Debug|Win32
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Release|x64.ActiveCfg = Release|x64
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Release|x64.Build.0 = Release|x64
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Release|x86.ActiveCfg = Release|Win32
+		{B482A146-030C-467A-8DEB-CE4879D21537}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

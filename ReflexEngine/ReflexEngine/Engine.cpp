@@ -20,7 +20,7 @@ namespace Reflex::Core
 	}
 
 	Engine::Engine( const int screenWidth, const int screenHeight, const std::string& windowName )
-		: m_updateInterval( sf::seconds( 1.0f / 60.f ) )
+		: m_updateInterval( sf::seconds( 1.0f / 30.f ) )
 		, m_window()
 		, m_textureManager()
 		, m_fontManager()
@@ -59,20 +59,16 @@ namespace Reflex::Core
 
 			while( m_window.isOpen() )
 			{
-				sf::Time deltaTime = clock.restart();
+				sf::Time deltaTime = std::min( clock.restart(), sf::seconds( 1.0f / 30.f ) );
 				Profiler::GetProfiler().FrameTick( deltaTime.asMicroseconds() );
-				ProcessEvents();
 
 				accumlatedTime += deltaTime;
-				bool updated = false;
-				unsigned count = 0;
 
-				while( accumlatedTime > m_updateInterval && ++count < 10 )
+				while( accumlatedTime > m_updateInterval )
 				{
 					accumlatedTime -= m_updateInterval;
 					ProcessEvents();
 					Update( m_updateInterval.asSeconds() );
-					updated = true;
 				}
 
 				ImGui::SFML::Update( m_window, deltaTime );

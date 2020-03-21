@@ -20,6 +20,12 @@ namespace Reflex
 			ForEachSystemComponent< Transform >(
 				[&]( const TransformHandle& transform )
 			{
+				if( transform->GetVelocity().x != 0.0f || transform->GetVelocity().y != 0.0f )
+				{
+					const auto newPos = Reflex::WrapAround( transform->getPosition() + transform->GetVelocity() * deltaTime, GetWorld().GetBounds() );
+					transform->setPosition( newPos );
+				}
+
 				if( transform->m_rotateDurationSec > 0.0f )
 				{
 					const float step = std::min( transform->m_rotateDurationSec, deltaTime );

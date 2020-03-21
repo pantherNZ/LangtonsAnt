@@ -16,10 +16,10 @@ namespace Reflex::Systems
 
 	void RenderSystem::Update( const float deltaTime )
 	{
-		std::sort( m_components.begin(), m_components.end(), []( const ComponentsSet& left, const ComponentsSet& right )
-			{
-				return Handle< Reflex::Components::Transform >( left[1] )->GetRenderIndex() < Handle< Reflex::Components::Transform >( right[1] )->GetRenderIndex();
-			} );
+		//std::sort( m_components.begin(), m_components.end(), []( const ComponentsSet& left, const ComponentsSet& right )
+		//	{
+		//		return Handle< Reflex::Components::Transform >( left[1] )->GetRenderIndex() < Handle< Reflex::Components::Transform >( right[1] )->GetRenderIndex();
+		//	} );
 	}
 
 	void RenderSystem::Render( sf::RenderTarget& target, sf::RenderStates states ) const

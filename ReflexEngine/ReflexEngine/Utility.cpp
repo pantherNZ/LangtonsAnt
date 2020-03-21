@@ -76,6 +76,20 @@ namespace Reflex
 		return true;
 	}
 
+	sf::Vector2f WrapAround( const sf::Vector2f& pos, const sf::FloatRect& bounds )
+	{
+		sf::Vector2f out = pos;
+		if( out.x < bounds.left )
+			out.x = bounds.width;
+		if( out.y < bounds.top )
+			out.y = bounds.height;
+		if( out.x > bounds.width )
+			out.x = bounds.left;
+		if( out.y > bounds.height )
+			out.y = bounds.top;
+		return out;
+	}
+
 	bool IntersectPolygonCircle( const std::vector< sf::Vector2f >& polygon, const Circle& circle )
 	{
 		return IntersectPolygonCircle( polygon, circle.centre, circle.radius );

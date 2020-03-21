@@ -588,7 +588,16 @@ void GameState::Render()
 
 	ImGui::SameLine();
 	if( ImGui::Button( "Load Key" ) )
-		LoadFromSharingKey( key );
+	{
+		try
+		{
+			LoadFromSharingKey( key );
+		}
+		catch( std::exception e )
+		{
+			LOG_WARN( "Failed to load key" );
+		}
+	}
 
 	ImGui::End();
 }

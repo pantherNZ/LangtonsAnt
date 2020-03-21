@@ -132,6 +132,12 @@
     <ClInclude Include="CameraSystem.h">
       <Filter>Systems</Filter>
     </ClInclude>
+    <ClInclude Include="SteeringComponent.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="SteeringSystem.h">
+      <Filter>Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TransformComponent.cpp">
@@ -204,6 +210,12 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="CameraSystem.cpp">
+      <Filter>Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="SteeringComponent.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="SteeringSystem.cpp">
       <Filter>Systems</Filter>
     </ClCompile>
   </ItemGroup>
