@@ -121,7 +121,7 @@ void GameState::Reset( const bool resetGridCcolours )
 		ant.currentDir = ant.startingDir;
 	}
 	
-	activeAnts = ants.size();
+	activeAnts = ( unsigned )ants.size();
 	generation = 0;
 	placingAnts = false;
 
@@ -563,7 +563,7 @@ void GameState::Render()
 		customStates.push_back( std::move( copiedCustomState ) );
 		SaveCustomSetups();
 		currentItem = customStates.back().name.c_str();
-		currentStateInfo = customStates.size() - 1;
+		currentStateInfo = ( unsigned )customStates.size() - 1;
 	}
 
 	ImGui::SameLine();
@@ -697,7 +697,7 @@ void GameState::RandomiseParameters()
 		if( Reflex::RandomBool() )
 		{
 			std::vector< sf::Color > colours;
-			colours.resize( std::max( 2U, ( unsigned )std::sqrt( Reflex::RandomInt( ants.size() * ants.size() ) ) ) );
+			colours.resize( std::max( 2U, ( unsigned )std::sqrt( Reflex::RandomInt( ( int )ants.size() * ( int )ants.size() ) ) ) );
 
 			if( Reflex::RandomBool() )
 			{

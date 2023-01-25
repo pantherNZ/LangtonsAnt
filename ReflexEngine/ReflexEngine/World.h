@@ -156,10 +156,10 @@ namespace Reflex::Core
 
 		for( auto iter = m_systems.begin(); iter != m_systems.end(); ++iter )
 		{
-			if( systemType == Type( typeid( iter->first.get() ) ) )
+			if( systemType == iter->first )
 			{
-				iter->first->OnSystemShutdown();
-				iter->first.release();
+				iter->second->OnSystemShutdown();
+				iter->second.release();
 				m_systems.erase( iter );
 				break;
 			}
